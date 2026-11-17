@@ -1,0 +1,19 @@
+{
+  "name": "marivi-site",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MARIVI — introduction website with 3D furniture showcase (suzani & adras, hand made in Uzbekistan)",
+  "type": "module",
+  "scripts": {
+    "dev": "http-server . -p 8766 -a 127.0.0.1 -c-1 -o /site/",
+    "optimize": "node scripts/optimize.mjs",
+    "optimize:one": "node scripts/optimize.mjs --only"
+  },
+  "devDependencies": {
+    "@gltf-transform/cli": "^4.5.1",
+    "http-server": "^14.1.1"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

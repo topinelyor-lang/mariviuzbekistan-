@@ -1,0 +1,38 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Сравнение: оригинал и оптимизация</title>
+<script type="module" src="https://cdn.jsdelivr.net/npm/@google/model-viewer@3.5.0/dist/model-viewer.min.js"></script>
+<style>
+body{margin:0;background:#F2ECDF;font:14px/1.4 system-ui,sans-serif;color:#15161C}
+.bar{padding:12px 16px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.bar button{padding:6px 10px;border:1px solid #15161C;background:none;cursor:pointer}
+.bar button[aria-pressed=true]{background:#22398A;color:#fff;border-color:#22398A}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:0 4px}
+figure{margin:0;position:relative;background:#FBF8F1}
+figcaption{position:absolute;top:8px;left:10px;z-index:2}
+model-viewer{width:100%;height:calc(100vh - 70px)}
+</style></head><body>
+<div class="bar" id="bar">Модель:</div>
+<div class="grid">
+  <figure><figcaption id="c1">Оригинал</figcaption><model-viewer id="a" camera-controls interaction-prompt="none" environment-image="neutral" tone-mapping="neutral" shadow-intensity="1"></model-viewer></figure>
+  <figure><figcaption id="c2">Оптимизация</figcaption><model-viewer id="b" camera-controls interaction-prompt="none" environment-image="neutral" tone-mapping="neutral" shadow-intensity="1"></model-viewer></figure>
+</div>
+<script>
+const a=document.getElementById('a'),b=document.getElementById('b'),bar=document.getElementById('bar');
+const sizes={};
+async function size(u){const r=await fetch(u,{method:'HEAD'});return (r.headers.get('content-length')/1048576).toFixed(1)+' МБ'}
+async function pick(i){
+  bar.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x.dataset.i==i));
+  a.src=`../source-models/m${i}.glb`; b.src=`../site/models/m${i}.glb`;
+  document.getElementById('c1').textContent='Оригинал · '+await size(a.src);
+  document.getElementById('c2').textContent='Оптимизация · '+await size(b.src);
+}
+for(let i=1;i<=7;i++)bar.insertAdjacentHTML('beforeend',`<button data-i="${i}">${i}</button>`);
+bar.onclick=e=>{if(e.target.dataset.i)pick(e.target.dataset.i)};
+// keep both cameras in sync
+let lock=false;
+for(const [x,y] of [[a,b],[b,a]]) x.addEventListener('camera-change',()=>{if(lock)return;lock=true;y.cameraOrbit=x.getCameraOrbit().toString();y.cameraTarget=x.getCameraTarget().toString();y.fieldOfView=x.getFieldOfView()+'deg';y.jumpCameraToGoal();lock=false});
+const q=new URLSearchParams(location.search);
+pick(q.get('m')||4);
+if(q.get('orbit')){a.cameraOrbit=b.cameraOrbit=q.get('orbit')}
+if(q.get('target')){a.cameraTarget=b.cameraTarget=q.get('target')}
+</script></body></html>

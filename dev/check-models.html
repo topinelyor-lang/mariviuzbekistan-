@@ -1,0 +1,17 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8">
+<title>Проверка моделей</title>
+<script type="module" src="https://cdn.jsdelivr.net/npm/@google/model-viewer@3.5.0/dist/model-viewer.min.js"></script>
+<style>body{margin:0;display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:#F2ECDF;font:13px system-ui}
+figure{margin:0;background:#FBF8F1;position:relative}figcaption{position:absolute;top:6px;left:8px;z-index:2}
+model-viewer{width:100%;height:300px}</style></head><body>
+<!-- Loads every optimized model and reports load / error per file. Used to check a deploy. -->
+<script>
+const out={};
+for(let i=1;i<=7;i++){
+  document.body.insertAdjacentHTML('beforeend',`<figure><figcaption id="s${i}">m${i}: …</figcaption><model-viewer id="v${i}" src="../${new URLSearchParams(location.search).get("dir")||"site/models"}/m${i}.glb" camera-orbit="30deg 75deg auto"></model-viewer></figure>`);
+  const v=document.getElementById('v'+i), s=document.getElementById('s'+i);
+  v.addEventListener('load',()=>{s.textContent=`m${i}: OK`;out[i]='OK';done()});
+  v.addEventListener('error',e=>{s.textContent=`m${i}: ERROR ${e.detail?.type||''}`;out[i]='ERROR';done()});
+}
+function done(){document.title='RESULT '+JSON.stringify(out)}
+</script></body></html>

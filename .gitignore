@@ -1,0 +1,14 @@
+# dependencies
+node_modules/
+
+# original heavy 3D models (20–35 MB each) — kept locally, see README
+source-models/
+
+# macOS / editors
+.DS_Store
+.vscode/
+.idea/
+
+# local tooling
+.claude/
+*.log
