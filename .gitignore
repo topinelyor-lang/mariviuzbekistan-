@@ -12,3 +12,4 @@ source-models/
 # local tooling
 .claude/
 *.log
+dev/bisect/

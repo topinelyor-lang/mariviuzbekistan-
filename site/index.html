@@ -344,7 +344,7 @@ h1 .k path{stroke:var(--anor);stroke-width:3;fill:none;stroke-linecap:round;stro
         <div class="arch__frame"><svg aria-hidden="true"><rect width="100%" height="100%" fill="url(#tile)"/></svg></div>
         <div class="arch__inner loading" id="inner">
           <div class="spin" aria-hidden="true"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 3 24 14 36 10 28 20 36 30 24 26 20 37 16 26 4 30 12 20 4 10 16 14Z"/></svg></div>
-          <model-viewer id="mv" alt="" loading="lazy" camera-controls disable-pan disable-zoom auto-rotate auto-rotate-delay="2000" rotation-per-second="10deg"
+          <model-viewer id="mv" alt="" camera-controls disable-pan disable-zoom auto-rotate auto-rotate-delay="2000" rotation-per-second="10deg"
             interaction-prompt="none" camera-orbit="-22deg 78deg 118%" field-of-view="24deg" min-camera-orbit="auto 60deg auto" max-camera-orbit="auto 90deg auto"
             shadow-intensity="1.2" shadow-softness=".85" exposure="1.0" tone-mapping="neutral" environment-image="neutral"
             ar ar-modes="webxr scene-viewer quick-look"><div slot="progress-bar"></div><button slot="ar-button" hidden></button></model-viewer>
@@ -423,10 +423,21 @@ function show(i,instant){
     $('inv').textContent='Inv. № '+String(i+1).padStart(3,'0');
     $('name').textContent=it.name; $('sub').textContent=it.sub; $('desc').textContent=it.desc; $('cur').textContent=pad(i+1);
     $('spec').innerHTML=`<dt>Сюзане</dt><dd>${it.suzani}</dd><dt>Каркас</dt><dd>${it.frame}</dd><dt>Размер</dt><dd>${it.size}</dd><dt>Ручная работа</dt><dd>${it.hours}</dd>`;
-    mv.alt=`${it.sub}, ${it.suzani}`; mv.src=`models/${it.f}.glb`; mv.cameraOrbit='-22deg 78deg 118%';
+    mv.alt=`${it.sub}, ${it.suzani}`; mv.cameraOrbit='-22deg 78deg 118%';
+    if(galleryReady) mv.src=`models/${it.f}.glb`;
   },instant?0:350);
 }
-mv.addEventListener('load',()=>{hall.classList.remove('is-swapping');inner.classList.remove('loading')});
+// Load the gallery model only when the section is near the screen. We don't use
+// model-viewer's loading="lazy": it never starts while the viewer is hidden
+// with opacity:0 during a swap, so the model would never appear.
+let galleryReady=false;
+new IntersectionObserver((entries,io)=>{
+  if(!entries.some(e=>e.isIntersecting))return;
+  io.disconnect(); galleryReady=true; mv.src=`models/${items[cur].f}.glb`;
+},{rootMargin:'600px 0px'}).observe(hall);
+const shown=()=>{hall.classList.remove('is-swapping');inner.classList.remove('loading')};
+mv.addEventListener('load',shown);
+mv.addEventListener('error',shown);
 $('list').addEventListener('click',e=>{const b=e.target.closest('button');if(b)show(+b.dataset.i)});
 $('prev').onclick=()=>show(cur-1); $('next').onclick=()=>show(cur+1);
 addEventListener('keydown',e=>{
