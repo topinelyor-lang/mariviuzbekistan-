@@ -196,7 +196,7 @@ body.no-scroll{overflow:hidden}
 model-viewer[ar-status="session-started"] .arhud,model-viewer[ar-status="object-placed"] .arhud{display:block}
 .arhud__top{position:absolute;top:max(16px,env(safe-area-inset-top));right:16px;display:flex;flex-direction:column;align-items:flex-end;gap:6px}
 .arhud__top b{font:400 22px/1 var(--serif);color:#fff;text-shadow:0 1px 8px rgba(0,0,0,.5)}
-.arhud__scale{max-width:calc(100vw - 32px);white-space:nowrap;font-size:13px;padding:7px 11px;border-radius:999px;background:var(--kobalt);color:#fff;transition:background .2s}
+.arhud__scale{pointer-events:auto;border:0;font-family:var(--sans);max-width:calc(100vw - 32px);white-space:nowrap;font-size:13px;padding:7px 11px;border-radius:999px;background:var(--kobalt);color:#fff;transition:background .2s}
 .arhud__scale.is-off{background:var(--gisht)}
 .arhud__find{position:absolute;left:50%;top:46%;transform:translate(-50%,-50%);width:min(300px,80%);margin:0;text-align:center;font-size:15px;color:#fff;background:rgba(21,22,28,.6);padding:12px 16px}
 model-viewer[ar-status="object-placed"] .arhud__find{display:none}
@@ -205,6 +205,12 @@ model-viewer[ar-status="object-placed"] .arhud__find{display:none}
 .arhud__tips svg{width:22px;height:22px;fill:none;stroke:var(--kobalt);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 .arhud__tips b{font-weight:600;color:var(--kobalt)}
 .arhud__tips.is-hidden{opacity:0}
+.arhud__bar{display:none;position:absolute;left:50%;transform:translateX(-50%);bottom:max(24px,env(safe-area-inset-bottom));gap:8px;pointer-events:auto}
+model-viewer[ar-status="object-placed"] .arhud__bar{display:flex}
+model-viewer[ar-status="object-placed"] .arhud__tips{bottom:calc(max(24px,env(safe-area-inset-bottom)) + 84px)}
+.arhud__bar button{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:84px;padding:10px 8px 8px;border:0;border-radius:14px;background:rgba(251,248,241,.95);color:var(--kobalt);font:500 12px/1 var(--sans);box-shadow:0 6px 20px -8px rgba(0,0,0,.5)}
+.arhud__bar button:active{background:var(--kobalt);color:#fff}
+.arhud__bar svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 
 /* AR button, QR dialog, toast */
 .btn--ar svg{width:16px;height:16px;flex:none}
@@ -414,8 +420,13 @@ model-viewer[ar-status="object-placed"] .arhud__find{display:none}
             shadow-intensity="1.2" shadow-softness=".85" exposure="1.0" tone-mapping="neutral" environment-image="neutral"
             ar ar-modes="webxr scene-viewer quick-look" ar-placement="floor" ar-scale="auto" xr-environment><div slot="progress-bar"></div><button slot="ar-button" hidden></button>
             <!-- shown over the camera during a WebXR session (default slot = DOM overlay root) -->
-            <div class="arhud" aria-hidden="true">
-              <div class="arhud__top"><b id="arName">Qush</b><span class="arhud__scale" id="arScale">100% · натуральная величина</span></div>
+            <div class="arhud">
+              <div class="arhud__top"><b id="arName">Qush</b><button type="button" class="arhud__scale" id="arScale" data-ar="real">100% · натуральная величина</button></div>
+              <div class="arhud__bar" id="arBar" role="toolbar" aria-label="Управление предметом">
+                <button type="button" data-ar="rotate"><svg viewBox="0 0 24 24"><path d="M19 12a7 7 0 1 1-2-4.9M19 4v4h-4"/></svg><span>Повернуть</span></button>
+                <button type="button" data-ar="flip"><svg viewBox="0 0 24 24"><path d="M7 7h11l-3-3M17 17H6l3 3"/></svg><span>Развернуть</span></button>
+                <button type="button" data-ar="bigger"><svg viewBox="0 0 24 24"><path d="M12 6v12M6 12h12"/></svg><span>Увеличить</span></button>
+              </div>
               <p class="arhud__find" id="arFind">Медленно поводите телефоном и наведите камеру на пол</p>
               <ul class="arhud__tips" id="arTips">
                 <li><svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/></svg><span>Палец на предмете — <b>переместить</b> по полу</span></li>
@@ -637,6 +648,28 @@ mv.addEventListener('ar-status',e=>{
   if(s==='failed'){arbtn.classList.remove('is-busy');updateArLabel();toast('Не удалось запустить AR. Проверьте доступ к камере и попробуйте ещё раз.',6000)}
   if(s==='not-presenting'){arbtn.classList.remove('is-busy');updateArLabel()}
 });
+// in-AR buttons: rotate 45°, turn around 180°, enlarge; the scale badge returns to 100%.
+// They steer model-viewer's AR renderer goals, so changes animate like the gestures do.
+function arRenderer(){
+  for(let o=Object.getPrototypeOf(mv);o&&o!==HTMLElement.prototype;o=Object.getPrototypeOf(o)){
+    for(const k of Object.getOwnPropertySymbols(o)){
+      const d=Object.getOwnPropertyDescriptor(o,k);
+      if(d&&d.get){try{const v=d.get.call(mv);if(v&&v.arRenderer)return v.arRenderer}catch{}}
+    }
+  }
+}
+const arControls=$('arBar').parentElement;
+// taps on overlay buttons must not also start a drag/rotate of the object
+arControls.addEventListener('beforexrselect',e=>{if(e.target.closest('button'))e.preventDefault()});
+arControls.addEventListener('click',e=>{
+  const a=e.target.closest('[data-ar]')?.dataset.ar, ar=arRenderer(); if(!a||!ar)return;
+  if(a==='rotate')ar.goalYaw+=Math.PI/4;
+  if(a==='flip')ar.goalYaw+=Math.PI;
+  if(a==='bigger')ar.goalScale=Math.min((ar.goalScale||1)*1.25,3);
+  if(a==='real')ar.goalScale=1;
+  $('arTips').classList.add('is-hidden');
+});
+
 // in-AR HUD: live scale (snaps to 100% near true size) and gesture tips
 function arScene(){ // model-viewer keeps its scene under a private symbol
   for(const k of Object.getOwnPropertySymbols(mv)){const v=mv[k];if(v&&typeof v==='object'&&'canScale' in v&&v.scale)return v}
@@ -651,7 +684,7 @@ mv.addEventListener('ar-status',e=>{
     clearInterval(arPoll);
     if(sc)arPoll=setInterval(()=>{
       const p=Math.round(sc.scale.x*100), real=Math.abs(p-100)<1;
-      el.textContent=real?'100% · натуральная величина':`${p}% · реальный размер — 100%`;
+      el.textContent=real?'100% · натуральная величина':`${p}% · нажмите — вернуть 100%`;
       el.classList.toggle('is-off',!real);
     },150);
   }
