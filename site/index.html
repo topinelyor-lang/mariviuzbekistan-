@@ -150,6 +150,8 @@ h1 .k path{stroke:var(--anor);stroke-width:3;fill:none;stroke-linecap:round;stro
 .loading .spin{opacity:1}.spin svg{width:100%;height:100%;animation:rot 3s linear infinite}
 @keyframes rot{to{transform:rotate(360deg)}}
 .controls{display:flex;align-items:center;gap:22px;font-size:13px;color:rgba(251,248,241,.75)}
+.controls__hint{margin-left:6px;font-size:12px;color:rgba(251,248,241,.55)}
+@media (max-width:600px){.controls__hint{display:none}}
 .pager{display:flex;align-items:center;gap:14px;font-variant-numeric:tabular-nums}
 .pager b{font:400 22px var(--serif);color:var(--paxta)}
 .arrow{width:40px;height:40px;border:1px solid rgba(251,248,241,.35);border-radius:50%;display:grid;place-items:center;transition:.25s}
@@ -165,6 +167,29 @@ h1 .k path{stroke:var(--anor);stroke-width:3;fill:none;stroke-linecap:round;stro
 .index li button[aria-current="true"]{color:var(--non)}
 .index li button[aria-current="true"] span:first-child::before{content:"◆ ";font-size:8px;vertical-align:2px}
 .band{position:absolute;left:0;right:0;bottom:0;height:30px}.band svg{width:100%;height:100%;display:block}
+
+/* viewer controls: zoom, reset, fullscreen */
+.viewbar{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);z-index:3;display:flex;gap:2px;padding:3px;background:rgba(251,248,241,.92);box-shadow:0 6px 18px -8px rgba(20,34,90,.5);border-radius:999px}
+.viewbar button{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;color:var(--kobalt);transition:background .2s,color .2s}
+.viewbar button:hover{background:var(--kobalt);color:var(--paxta)}
+.viewbar button:focus-visible{outline:2px solid var(--non);outline-offset:1px}
+.viewbar svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.viewbar .i-shrink,.is-expanded .viewbar .i-expand{display:none}
+.is-expanded .viewbar .i-shrink{display:block}
+.viewhead{display:none}
+.viewhint{position:absolute;left:50%;bottom:62px;transform:translate(-50%,6px);z-index:3;margin:0;white-space:nowrap;font-size:12px;background:var(--siyoh);color:var(--paxta);padding:7px 11px;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s}
+.viewhint.is-on{opacity:1;transform:translate(-50%,0)}
+.arch.is-expanded .arch__inner{position:fixed;inset:0;z-index:70;-webkit-mask:none;mask:none}
+.arch.is-expanded .arch__inner::after{height:28%}
+.arch.is-expanded .viewbar{bottom:max(22px,env(safe-area-inset-bottom))}
+.arch.is-expanded .viewhint{bottom:76px}
+.arch.is-expanded .viewhead{display:flex;flex-direction:column;gap:4px;position:absolute;top:22px;left:var(--gut);z-index:3;color:var(--siyoh)}
+.viewhead b{font:400 clamp(32px,4vw,52px)/1 var(--serif)}
+.viewhead span{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--gisht)}
+.viewclose{display:none}
+.arch.is-expanded .viewclose{display:grid;place-items:center;position:absolute;top:18px;right:var(--gut);z-index:3;width:46px;height:46px;border-radius:50%;background:var(--siyoh);color:var(--paxta);font:400 26px/1 var(--serif)}
+.arch.is-expanded .viewclose:hover{background:var(--kobalt)}
+body.no-scroll{overflow:hidden}
 
 /* AR button, QR dialog, toast */
 .btn--ar svg{width:16px;height:16px;flex:none}
@@ -368,16 +393,27 @@ h1 .k path{stroke:var(--anor);stroke-width:3;fill:none;stroke-linecap:round;stro
         <div class="arch__frame"><svg aria-hidden="true"><rect width="100%" height="100%" fill="url(#tile)"/></svg></div>
         <div class="arch__inner loading" id="inner">
           <div class="spin" aria-hidden="true"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 3 24 14 36 10 28 20 36 30 24 26 20 37 16 26 4 30 12 20 4 10 16 14Z"/></svg></div>
-          <model-viewer id="mv" alt="" camera-controls disable-pan disable-zoom auto-rotate auto-rotate-delay="2000" rotation-per-second="10deg"
-            interaction-prompt="none" camera-orbit="-22deg 78deg 118%" field-of-view="24deg" min-camera-orbit="auto 60deg auto" max-camera-orbit="auto 90deg auto"
+          <model-viewer id="mv" alt="" camera-controls touch-action="pan-y" auto-rotate auto-rotate-delay="2000" rotation-per-second="10deg"
+            interaction-prompt="none" camera-orbit="-22deg 78deg 118%" field-of-view="24deg" min-field-of-view="8deg" max-field-of-view="30deg"
+            min-camera-orbit="auto 25deg 22%" max-camera-orbit="auto 92deg 140%" interpolation-decay="120"
             shadow-intensity="1.2" shadow-softness=".85" exposure="1.0" tone-mapping="neutral" environment-image="neutral"
             ar ar-modes="webxr scene-viewer quick-look" ar-placement="floor" ar-scale="fixed" xr-environment><div slot="progress-bar"></div><button slot="ar-button" hidden></button></model-viewer>
+          <div class="viewbar" role="toolbar" aria-label="Управление видом">
+            <button type="button" data-act="out" aria-label="Отдалить" title="Отдалить"><svg viewBox="0 0 16 16"><path d="M3.5 8h9"/></svg></button>
+            <button type="button" data-act="in" aria-label="Приблизить" title="Приблизить"><svg viewBox="0 0 16 16"><path d="M3.5 8h9M8 3.5v9"/></svg></button>
+            <button type="button" data-act="reset" aria-label="Сбросить вид" title="Сбросить вид"><svg viewBox="0 0 16 16"><path d="M3 8a5 5 0 1 0 1.6-3.7M3 2.5v2.8h2.8"/></svg></button>
+            <button type="button" data-act="expand" aria-label="На весь экран" title="На весь экран"><svg viewBox="0 0 16 16" class="i-expand"><path d="M2.5 6V2.5H6M10 2.5h3.5V6M13.5 10v3.5H10M6 13.5H2.5V10"/></svg><svg viewBox="0 0 16 16" class="i-shrink"><path d="M6 2.5V6H2.5M13.5 6H10V2.5M10 13.5V10h3.5M2.5 10H6v3.5"/></svg></button>
+          </div>
+          <div class="viewhead"><b id="vhName">Qush</b><span>Двойной клик — рассмотреть деталь</span></div>
+          <p class="viewhint" id="viewhint"></p>
+          <button type="button" class="viewclose" data-act="close" aria-label="Закрыть полноэкранный режим">×</button>
         </div>
       </div>
       <div class="controls">
         <button class="arrow" id="prev" aria-label="Предыдущий"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M14 8H3M7 4 3 8l4 4"/></svg></button>
         <div class="pager"><b id="cur">04</b><span>/ 07</span></div>
         <button class="arrow" id="next" aria-label="Следующий"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 8h11M9 4l4 4-4 4"/></svg></button>
+        <span class="controls__hint">Двойной клик — рассмотреть деталь</span>
       </div>
     </div>
 
@@ -463,7 +499,7 @@ function show(i,instant){
     $('inv').textContent='Inv. № '+String(i+1).padStart(3,'0');
     $('name').textContent=it.name; $('sub').textContent=it.sub; $('desc').textContent=it.desc; $('cur').textContent=pad(i+1);
     $('spec').innerHTML=`<dt>Сюзане</dt><dd>${it.suzani}</dd><dt>Каркас</dt><dd>${it.frame}</dd><dt>Размер, Ш×Г×В</dt><dd id="size">…</dd><dt>Ручная работа</dt><dd>${it.hours}</dd>`;
-    mv.alt=`${it.sub}, ${it.suzani}`; mv.cameraOrbit='-22deg 78deg 118%';
+    mv.alt=`${it.sub}, ${it.suzani}`; mv.cameraTarget='auto auto auto'; mv.cameraOrbit='-22deg 78deg 118%'; mv.fieldOfView='24deg'; mv.autoRotate=true; if($('vhName'))$('vhName').textContent=it.name;
     if(galleryReady) mv.src=`models/${it.f}.glb?v=${MODELS_V}`;
   },instant?0:350);
 }
@@ -482,8 +518,61 @@ $('list').addEventListener('click',e=>{const b=e.target.closest('button');if(b)s
 $('prev').onclick=()=>show(cur-1); $('next').onclick=()=>show(cur+1);
 addEventListener('keydown',e=>{
   const r=hall.getBoundingClientRect(); if(r.top>innerHeight||r.bottom<0)return;
+  if(e.target===mv||arch.classList.contains('is-expanded'))return;
   if(e.key==='ArrowRight')show(cur+1); if(e.key==='ArrowLeft')show(cur-1);
 });
+// ── view controls ───────────────────────────────
+// Zoom: −/+ buttons, pinch (touch & trackpad), Ctrl/⌘ + wheel; plain wheel keeps scrolling the page.
+// Pan: right-drag, Shift/Ctrl + drag, or two fingers. Double-click / double-tap zooms into that spot.
+const arch=mv.closest('.arch'), hint=$('viewhint');
+const HOME={orbit:'-22deg 78deg 118%',target:'auto auto auto',fov:'24deg'};
+let hintTimer;
+if(matchMedia('(pointer:coarse)').matches){ // touch wording
+  document.querySelectorAll('.viewhead span,.controls__hint').forEach(el=>el.textContent='Двойной тап — рассмотреть деталь');
+}
+function viewHint(msg){hint.textContent=msg;hint.classList.add('is-on');clearTimeout(hintTimer);hintTimer=setTimeout(()=>hint.classList.remove('is-on'),2200)}
+function stopSpin(){mv.autoRotate=false}
+function zoomBy(steps){
+  stopSpin();
+  // ~30% per click; model-viewer clamps to min/max-camera-orbit
+  const o=mv.getCameraOrbit(); mv.cameraOrbit=`${o.theta}rad ${o.phi}rad ${o.radius*Math.pow(.7,steps)}m`;
+}
+function resetView(){mv.cameraTarget=HOME.target;mv.cameraOrbit=HOME.orbit;mv.fieldOfView=HOME.fov}
+function focusAt(x,y){
+  const hit=mv.positionAndNormalFromPoint(x,y);
+  if(!hit){resetView();return}
+  stopSpin();
+  const o=mv.getCameraOrbit(), p=hit.position;
+  mv.cameraTarget=`${p.x}m ${p.y}m ${p.z}m`;
+  mv.cameraOrbit=`${o.theta}rad ${o.phi}rad ${Math.max(o.radius*.45,.35)}m`;
+}
+function setExpanded(on){
+  arch.classList.toggle('is-expanded',on); document.body.classList.toggle('no-scroll',on);
+  mv.setAttribute('touch-action',on?'none':'pan-y');
+  if(on){$('vhName').textContent=items[cur].name;if(!matchMedia('(pointer:coarse)').matches)viewHint('Esc — выйти')}
+}
+arch.querySelector('.viewclose').addEventListener('click',()=>setExpanded(false));
+arch.querySelector('.viewbar').addEventListener('click',e=>{
+  const a=e.target.closest('button')?.dataset.act;
+  if(a==='in')zoomBy(1); if(a==='out')zoomBy(-1); if(a==='reset')resetView();
+  if(a==='expand')setExpanded(!arch.classList.contains('is-expanded'));
+});
+addEventListener('keydown',e=>{if(e.key==='Escape'&&arch.classList.contains('is-expanded'))setExpanded(false)});
+// plain wheel scrolls the page; Ctrl/⌘+wheel and trackpad pinch (sent as ctrl+wheel) zoom
+mv.addEventListener('wheel',e=>{
+  if(e.ctrlKey||e.metaKey||arch.classList.contains('is-expanded')){stopSpin();return}
+  e.stopImmediatePropagation(); viewHint(navigator.platform.includes('Mac')?'Масштаб: щипок на трекпаде или ⌘ + колесо':'Масштаб: Ctrl + колесо или кнопки ниже');
+},{capture:true,passive:true});
+// double-click / double-tap → zoom into that spot; again on empty space → reset
+let lastTap={t:0,x:0,y:0}, down=null;
+mv.addEventListener('pointerdown',e=>{down={x:e.clientX,y:e.clientY};stopSpin()});
+mv.addEventListener('pointerup',e=>{
+  if(!down||Math.hypot(e.clientX-down.x,e.clientY-down.y)>8)return;
+  const now=performance.now();
+  if(now-lastTap.t<320&&Math.hypot(e.clientX-lastTap.x,e.clientY-lastTap.y)<30){focusAt(e.clientX,e.clientY);lastTap.t=0}
+  else lastTap={t:now,x:e.clientX,y:e.clientY};
+});
+
 // ── AR ──────────────────────────────────────────
 // Phones with AR: true-size model on the floor (WebXR / Scene Viewer / Quick Look).
 // Desktop: a QR code that opens this exhibit on the phone (?item=N#korgazma).
