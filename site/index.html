@@ -710,9 +710,17 @@ function openSceneViewer(){
     resizable:'true', disable_occlusion:'true',
   });
   const fallback=`${location.origin}${location.pathname}${location.search}#no-scene-viewer`;
-  const a=document.createElement('a');
-  a.href=`intent://arvr.google.com/scene-viewer/1.2?${params}#Intent;scheme=https;package=com.google.android.googlequicksearchbox;action=android.intent.action.VIEW;S.browser_fallback_url=${encodeURIComponent(fallback)};end;`;
-  a.click();
+  const intent=`intent://arvr.google.com/scene-viewer/1.2?${params}#Intent;scheme=https;package=com.google.android.googlequicksearchbox;action=android.intent.action.VIEW;S.browser_fallback_url=${encodeURIComponent(fallback)};end;`;
+  // If Scene Viewer really opens, this page goes to the background. If after 2.5 s it is still
+  // in front, nothing opened: say so and let the next tap use the in-browser AR.
+  let left=false; const gone=()=>{left=true};
+  addEventListener('blur',gone,{once:true}); addEventListener('pagehide',gone,{once:true});
+  document.addEventListener('visibilitychange',gone,{once:true});
+  setTimeout(()=>{
+    removeEventListener('blur',gone); removeEventListener('pagehide',gone); document.removeEventListener('visibilitychange',gone);
+    if(!left&&document.visibilityState==='visible'){sceneViewerBlocked=true;toast('Google Scene Viewer не открылся. Нажмите «AR в комнате» ещё раз — откроем AR прямо в браузере.',7000)}
+  },2500);
+  location.href=intent;
 }
 function sceneViewerMissing(){
   sceneViewerBlocked=true;
@@ -723,7 +731,7 @@ addEventListener('hashchange',()=>{if(location.hash==='#no-scene-viewer')sceneVi
 if(location.hash==='#no-scene-viewer')setTimeout(sceneViewerMissing,0); // fallback may reload the page
 
 arbtn.onclick=()=>{
-  if(IS_ANDROID&&!sceneViewerBlocked&&mv.loaded){openSceneViewer();return}
+  if(IS_ANDROID&&!sceneViewerBlocked){openSceneViewer();return} // Scene Viewer downloads the file itself
   if(mv.canActivateAR&&mv.loaded){
     arbtn.classList.add('is-busy'); arlabel.textContent='Запускаем AR…';
     // WebXR drops the model in front of you at the page camera's distance (~3.5 m in the
