@@ -1,0 +1,36 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8">
+<title>Poster render</title>
+<!-- Renders a still preview (poster) of every model with the same camera and light as the site,
+     and POSTs it to a local save endpoint (127.0.0.1:8767) that writes site/posters/<name>.webp.
+     Posters show instantly while the 3D model loads. Re-run after `npm run optimize`. -->
+<script type="module" src="https://cdn.jsdelivr.net/npm/@google/model-viewer@3.5.0/dist/model-viewer.min.js"></script>
+<style>body{margin:0;background:#fff}model-viewer{display:block;background:transparent}</style>
+</head><body>
+<script type="module">
+await customElements.whenDefined('model-viewer');
+// model-viewer lowers its render resolution when frames are slow; posters need full size
+customElements.get('model-viewer').minimumRenderScale = 1;
+const shots = [
+  // gallery arch: same framing as #mv
+  ...['m1','m2','m3','m4','m5','m6','m7'].map(id => ({ name: id, src: `../site/models/${id}.glb`, w: 520, h: 810,
+    attrs: { 'camera-orbit': '-22deg 78deg 118%', 'field-of-view': '24deg', 'shadow-intensity': '1.2', 'shadow-softness': '.85', exposure: '1.0' } })),
+  // hero: same framing as #heroMv
+  { name: 'hero-m7', src: '../site/models/m7.glb', w: 760, h: 760,
+    attrs: { 'camera-orbit': '-24deg 78deg 128%', 'field-of-view': '26deg', 'shadow-intensity': '1.15', 'shadow-softness': '.9', exposure: '1.02' } },
+];
+window.done = [];
+for (const s of shots) {
+  const mv = document.createElement('model-viewer');
+  mv.style.width = s.w + 'px'; mv.style.height = s.h + 'px';
+  for (const [k, v] of Object.entries({ ...s.attrs, 'tone-mapping': 'neutral', 'environment-image': 'neutral', 'interaction-prompt': 'none' })) mv.setAttribute(k, v);
+  document.body.append(mv);
+  await new Promise((ok, fail) => { mv.addEventListener('load', ok, { once: true }); mv.addEventListener('error', fail, { once: true }); mv.src = s.src; });
+  await new Promise(r => setTimeout(r, 900)); // let shadow + environment settle
+  const blob = await mv.toBlob({ mimeType: 'image/webp', qualityArgument: 0.82, idealAspect: false });
+  const res = await fetch(`http://127.0.0.1:8767/save/${s.name}`, { method: 'POST', body: blob });
+  window.done.push(`${s.name}: ${res.status} ${blob.size}`);
+  mv.remove();
+}
+document.title = 'DONE';
+</script>
+</body></html>

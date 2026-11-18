@@ -76,7 +76,7 @@ h1 .k path{stroke:var(--anor);stroke-width:3;fill:none;stroke-linecap:round;stro
 .tape{position:absolute;width:120px;height:30px;background:rgba(251,248,241,.72);box-shadow:0 1px 2px rgba(0,0,0,.08);z-index:4}
 .tape--1{top:4%;left:44%;transform:rotate(-6deg)}
 .tape--2{bottom:7%;right:5%;transform:rotate(38deg);width:90px}
-.stage model-viewer{position:absolute;inset:0;width:100%;height:100%;z-index:3;--progress-bar-color:transparent;background:transparent}
+.stage model-viewer{position:absolute;inset:0;width:100%;height:100%;z-index:3;--progress-bar-color:transparent;--poster-color:transparent;background:transparent}
 .loader{position:absolute;left:50%;bottom:16%;transform:translateX(-50%);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--kobalt);display:flex;gap:10px;align-items:center;z-index:4;transition:opacity .4s}
 .loader i{width:90px;height:1px;background:rgba(34,57,138,.2);position:relative;overflow:hidden}
 .loader i::after{content:"";position:absolute;inset:0;width:var(--p,0%);background:var(--kobalt)}
@@ -142,11 +142,11 @@ h1 .k path{stroke:var(--anor);stroke-width:3;fill:none;stroke-linecap:round;stro
 .arch__frame{inset:0}.arch__frame svg{width:100%;height:100%;display:block}
 .arch__inner{inset:5.5% 7.5% 0;background:radial-gradient(ellipse 80% 45% at 50% 82%,#fff 0,rgba(255,255,255,0) 70%),linear-gradient(180deg,#E9E0CC 0%,var(--paxta) 55%,#E7DCC5 100%)}
 .arch__inner::after{content:"";position:absolute;left:0;right:0;bottom:0;height:20%;background:linear-gradient(180deg,rgba(181,96,58,0),rgba(181,96,58,.10));border-top:1px solid rgba(181,96,58,.18)}
-.arch__inner model-viewer{position:absolute;inset:0;width:100%;height:100%;z-index:1;--progress-bar-color:transparent}
+.arch__inner model-viewer{position:absolute;inset:0;width:100%;height:100%;z-index:1;--progress-bar-color:transparent;--poster-color:transparent}
 /* never hide the viewer itself (opacity:0 / visibility): model-viewer then
    postpones rendering and the "load" event, and the gallery stays empty */
 .spin{z-index:2}
-.spin{position:absolute;left:50%;top:50%;width:34px;height:34px;margin:-17px;opacity:0;transition:opacity .3s;color:var(--kobalt)}
+.spin{position:absolute;left:50%;bottom:66px;width:28px;height:28px;margin-left:-14px;opacity:0;transition:opacity .3s;color:var(--kobalt)}
 .loading .spin{opacity:1}.spin svg{width:100%;height:100%;animation:rot 3s linear infinite}
 @keyframes rot{to{transform:rotate(360deg)}}
 .controls{display:flex;align-items:center;gap:22px;font-size:13px;color:rgba(251,248,241,.75)}
@@ -167,6 +167,9 @@ h1 .k path{stroke:var(--anor);stroke-width:3;fill:none;stroke-linecap:round;stro
 .index li button[aria-current="true"]{color:var(--non)}
 .index li button[aria-current="true"] span:first-child::before{content:"◆ ";font-size:8px;vertical-align:2px}
 .band{position:absolute;left:0;right:0;bottom:0;height:30px}.band svg{width:100%;height:100%;display:block}
+
+/* still preview: model-viewer's own poster slot, shown at once while a model loads */
+.still{display:block;width:100%;height:100%;object-fit:contain;background:radial-gradient(ellipse 80% 45% at 50% 82%,#fff 0,rgba(255,255,255,0) 70%),linear-gradient(180deg,#E9E0CC 0%,var(--paxta) 55%,#E7DCC5 100%)}
 
 /* viewer controls: zoom, reset, fullscreen */
 .viewbar{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);z-index:3;display:flex;gap:2px;padding:3px;background:rgba(251,248,241,.92);box-shadow:0 6px 18px -8px rgba(20,34,90,.5);border-radius:999px}
@@ -367,7 +370,7 @@ model-viewer[ar-status="object-placed"] .arhud__tips{bottom:calc(max(24px,env(sa
       <text font-family="Golos Text" font-size="8.5" letter-spacing="2.4" fill="currentColor"><textPath href="#pm">TOSHKENT · BUXORO · 2026 ·</textPath></text>
       <path d="M8 50c20-6 74-6 94 0M8 60c20 6 74 6 94 0" stroke-width="1.5"/>
     </svg>
-    <model-viewer id="heroMv" data-model="m7" alt="Кресло Xo'roz с вышивкой петуха, сюзане и адрас"
+    <model-viewer id="heroMv" data-model="m7" poster="posters/hero-m7.webp" alt="Кресло Xo'roz с вышивкой петуха, сюзане и адрас"
       camera-controls disable-zoom disable-pan auto-rotate auto-rotate-delay="2500" rotation-per-second="14deg"
       interaction-prompt="none" camera-orbit="-24deg 78deg 128%" field-of-view="26deg" min-camera-orbit="auto 55deg auto" max-camera-orbit="auto 92deg auto"
       shadow-intensity="1.15" shadow-softness=".9" exposure="1.02" tone-mapping="neutral" environment-image="neutral">
@@ -419,6 +422,7 @@ model-viewer[ar-status="object-placed"] .arhud__tips{bottom:calc(max(24px,env(sa
             min-camera-orbit="auto 25deg 22%" max-camera-orbit="auto 92deg 140%" interpolation-decay="120"
             shadow-intensity="1.2" shadow-softness=".85" exposure="1.0" tone-mapping="neutral" environment-image="neutral"
             ar ar-modes="webxr scene-viewer quick-look" ar-placement="floor" ar-scale="auto" xr-environment><div slot="progress-bar"></div><button slot="ar-button" hidden></button>
+            <img slot="poster" class="still" id="still" src="posters/m4.webp" alt="" decoding="async">
             <!-- shown over the camera during a WebXR session (default slot = DOM overlay root) -->
             <div class="arhud">
               <div class="arhud__top"><b id="arName">Qush</b><button type="button" class="arhud__scale" id="arScale" data-ar="real">100% · натуральная величина</button></div>
@@ -519,7 +523,11 @@ const modelUrl=id=>`models/${LIGHT?'mobile/':''}${id}.glb?v=${MODELS_V}`;
 const heroMv=document.getElementById('heroMv'), stage=document.getElementById('stage');
 heroMv.addEventListener('progress',e=>stage.querySelector('.loader i').style.setProperty('--p',e.detail.totalProgress*100+'%'));
 let heroDone=false;
-const heroFinished=()=>{heroDone=true;stage.classList.add('loaded');maybeLoadGallery()};
+const heroFinished=()=>{
+  heroDone=true;stage.classList.add('loaded');maybeLoadGallery();
+  // warm up all gallery stills (~250 KB) so switching exhibits shows a picture at once
+  items.forEach(it=>{const im=new Image();im.decoding='async';im.src=`posters/${it.f}.webp`});
+};
 heroMv.addEventListener('load',heroFinished);
 heroMv.addEventListener('error',heroFinished);
 heroMv.src=modelUrl(heroMv.dataset.model);
@@ -540,6 +548,8 @@ function show(i,instant){
   i=(i+items.length)%items.length; if(i===cur)return; cur=i; const it=items[i];
   document.querySelectorAll('#list button').forEach((b,j)=>b.setAttribute('aria-current',j===i));
   hall.classList.add('is-swapping'); inner.classList.add('loading');
+  // the new exhibit's still appears at once (no fade-in) and covers the old model until the new one is ready
+  $('still').src=`posters/${it.f}.webp`; if(mv.loaded)mv.showPoster();
   setTimeout(()=>{
     $('inv').textContent='Inv. № '+String(i+1).padStart(3,'0');
     $('name').textContent=it.name; $('sub').textContent=it.sub; $('desc').textContent=it.desc; $('cur').textContent=pad(i+1);
@@ -562,7 +572,7 @@ new IntersectionObserver((entries,io)=>{
   io.disconnect(); galleryNear=true; maybeLoadGallery();
   setTimeout(()=>{heroDone=true;maybeLoadGallery()},5000);
 },{rootMargin:'600px 0px'}).observe(hall);
-const shown=()=>{hall.classList.remove('is-swapping');inner.classList.remove('loading')};
+const shown=()=>{hall.classList.remove('is-swapping');inner.classList.remove('loading');mv.dismissPoster()};
 mv.addEventListener('load',shown);
 mv.addEventListener('error',shown);
 $('list').addEventListener('click',e=>{const b=e.target.closest('button');if(b)show(+b.dataset.i)});
