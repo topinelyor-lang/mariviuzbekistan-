@@ -367,7 +367,7 @@ model-viewer[ar-status="object-placed"] .arhud__tips{bottom:calc(max(24px,env(sa
       <text font-family="Golos Text" font-size="8.5" letter-spacing="2.4" fill="currentColor"><textPath href="#pm">TOSHKENT · BUXORO · 2026 ·</textPath></text>
       <path d="M8 50c20-6 74-6 94 0M8 60c20 6 74 6 94 0" stroke-width="1.5"/>
     </svg>
-    <model-viewer id="heroMv" src="models/m7.glb?v=2" alt="Кресло Xo'roz с вышивкой петуха, сюзане и адрас"
+    <model-viewer id="heroMv" data-model="m7" alt="Кресло Xo'roz с вышивкой петуха, сюзане и адрас"
       camera-controls disable-zoom disable-pan auto-rotate auto-rotate-delay="2500" rotation-per-second="14deg"
       interaction-prompt="none" camera-orbit="-24deg 78deg 128%" field-of-view="26deg" min-camera-orbit="auto 55deg auto" max-camera-orbit="auto 92deg auto"
       shadow-intensity="1.15" shadow-softness=".9" exposure="1.02" tone-mapping="neutral" environment-image="neutral">
@@ -508,12 +508,21 @@ document.querySelectorAll('[data-torn]').forEach(el=>{
 });
 const words=["Suzani","Adras","Yong'oq & buk","Qo'l mehnati","Buxoro","Marg'ilon","Toshkent","Bir nusxada"];
 document.getElementById('run').innerHTML=[...words,...words].map(w=>`<span>${w}</span>`).join('');
+// ── models: phone build vs desktop build ─────────
+// Bump MODELS_V after `npm run optimize` so browsers drop cached models.
+const MODELS_V='3';
+// Phones and low-memory devices get the light build (1024px textures, ~half the triangles):
+// the desktop build needs ~70 MB of GPU memory per model, which phones often can't spare.
+const LIGHT=matchMedia('(pointer:coarse)').matches||innerWidth<820||(navigator.deviceMemory||8)<=4;
+const modelUrl=id=>`models/${LIGHT?'mobile/':''}${id}.glb?v=${MODELS_V}`;
+
 const heroMv=document.getElementById('heroMv'), stage=document.getElementById('stage');
 heroMv.addEventListener('progress',e=>stage.querySelector('.loader i').style.setProperty('--p',e.detail.totalProgress*100+'%'));
-heroMv.addEventListener('load',()=>stage.classList.add('loaded'));
-
-// Bump after `npm run optimize` (and in the hero <model-viewer> src) so browsers drop cached models.
-const MODELS_V='2';
+let heroDone=false;
+const heroFinished=()=>{heroDone=true;stage.classList.add('loaded');maybeLoadGallery()};
+heroMv.addEventListener('load',heroFinished);
+heroMv.addEventListener('error',heroFinished);
+heroMv.src=modelUrl(heroMv.dataset.model);
 // ko'rgazma — NOTE: names, sizes and texts are placeholders until the brand confirms them
 const items=[
  {f:'m1',name:'Lagan',type:'Оттоманка',sub:'Оттоманка на точёных ножках',suzani:'Нурата, винтаж ~1970',frame:'Орех, патина',hours:'≈ 30 ч',desc:'Старое сюзане с выцветшим лиловым медальоном. Следы времени сохранены — это часть истории ткани.'},
@@ -536,16 +545,22 @@ function show(i,instant){
     $('name').textContent=it.name; $('sub').textContent=it.sub; $('desc').textContent=it.desc; $('cur').textContent=pad(i+1);
     $('spec').innerHTML=`<dt>Сюзане</dt><dd>${it.suzani}</dd><dt>Каркас</dt><dd>${it.frame}</dd><dt>Размер, Ш×Г×В</dt><dd id="size">…</dd><dt>Ручная работа</dt><dd>${it.hours}</dd>`;
     mv.alt=`${it.sub}, ${it.suzani}`; mv.cameraTarget='auto auto auto'; mv.cameraOrbit='-22deg 78deg 118%'; mv.fieldOfView='24deg'; mv.autoRotate=true; if($('vhName'))$('vhName').textContent=it.name;
-    if(galleryReady) mv.src=`models/${it.f}.glb?v=${MODELS_V}`;
+    if(galleryReady) mv.src=modelUrl(it.f);
   },instant?0:350);
 }
-// Load the gallery model only when the section is near the screen. We don't use
-// model-viewer's loading="lazy": it never starts while the viewer is hidden
-// with opacity:0 during a swap, so the model would never appear.
-let galleryReady=false;
+// Load the gallery model when the section is near the screen, and only after the hero
+// model is done, so a phone never downloads and decodes two models at once.
+// (A 5 s fallback covers a hero that is slow or never loads.) We don't use
+// model-viewer's loading="lazy": it never starts while the viewer is hidden.
+let galleryReady=false, galleryNear=false;
+function maybeLoadGallery(){
+  if(galleryReady||!galleryNear||!heroDone)return;
+  galleryReady=true; mv.src=modelUrl(items[cur].f);
+}
 new IntersectionObserver((entries,io)=>{
   if(!entries.some(e=>e.isIntersecting))return;
-  io.disconnect(); galleryReady=true; mv.src=`models/${items[cur].f}.glb?v=${MODELS_V}`;
+  io.disconnect(); galleryNear=true; maybeLoadGallery();
+  setTimeout(()=>{heroDone=true;maybeLoadGallery()},5000);
 },{rootMargin:'600px 0px'}).observe(hall);
 const shown=()=>{hall.classList.remove('is-swapping');inner.classList.remove('loading')};
 mv.addEventListener('load',shown);

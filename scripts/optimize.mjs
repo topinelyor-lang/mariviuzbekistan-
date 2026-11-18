@@ -13,9 +13,12 @@ import { NodeIO, getBounds } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
 
 const SRC = 'source-models';
-const OUT = join('site', 'models');
-const TEXTURE_SIZE = process.env.TEXTURE_SIZE ?? '2048';   // keep 2048: embroidery detail matters
-const SIMPLIFY_RATIO = process.env.SIMPLIFY_RATIO ?? '0.2'; // ~400k → ~80k triangles
+// Two builds of every model: full quality for desktop, a light one for phones
+// (phones have little GPU memory: a 2048px texture set alone takes ~67 MB there).
+const VARIANTS = [
+  { out: join('site', 'models'),           textureSize: process.env.TEXTURE_SIZE ?? '2048', simplifyRatio: process.env.SIMPLIFY_RATIO ?? '0.2' },
+  { out: join('site', 'models', 'mobile'), textureSize: process.env.MOBILE_TEXTURE_SIZE ?? '1024', simplifyRatio: process.env.MOBILE_SIMPLIFY_RATIO ?? '0.1' },
+];
 const SIMPLIFY_ERROR = process.env.SIMPLIFY_ERROR ?? '0.0005';
 const COMPRESS = process.env.COMPRESS ?? 'quantize';        // quantize | draco
 
@@ -33,10 +36,12 @@ if (!files.length) {
   process.exit(1);
 }
 
-mkdirSync(OUT, { recursive: true });
 const io = new NodeIO().registerExtensions(ALL_EXTENSIONS);
 const mb = (p) => (statSync(p).size / 1048576).toFixed(2) + ' MB';
 
+for (const { out: OUT, textureSize: TEXTURE_SIZE, simplifyRatio: SIMPLIFY_RATIO } of VARIANTS) {
+mkdirSync(OUT, { recursive: true });
+console.log(`\n${OUT}  (textures ${TEXTURE_SIZE}px, simplify ${SIMPLIFY_RATIO})`);
 for (const f of files) {
   const id = basename(f, '.glb');
   const heightCm = sizes[id]?.heightCm;
@@ -74,4 +79,5 @@ for (const f of files) {
   const b = getBounds(scene);
   const cm = (i) => Math.round((b.max[i] - b.min[i]) * 100);
   console.log(`${f.padEnd(8)} ${mb(input).padStart(9)} → ${mb(output).padStart(8)}   ${cm(0)} × ${cm(2)} × ${cm(1)} cm (W×D×H)`);
+}
 }
