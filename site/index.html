@@ -654,10 +654,56 @@ function openQr(){
   $('qrDialog').showModal();
 }
 $('qrDialog').addEventListener('click',e=>{if(e.target===e.currentTarget)e.currentTarget.close()});
+let arSavedOrbit=null;
+function restoreOrbit(){if(arSavedOrbit){mv.cameraOrbit=arSavedOrbit;arSavedOrbit=null}}
+
+// ── WebXR floor lock ────────────────────────────
+// model-viewer takes the floor height from the very first hit-test result and never updates
+// it; early plane estimates are often too high, so the model hangs in the air. While AR runs,
+// we cast our own ray straight down onto the floor under the model and keep its height on it.
+let floorLock=null;
+function startFloorLock(){
+  const ar=arRenderer(), session=ar?.currentSession; if(!session||floorLock||typeof XRRay==='undefined')return;
+  const ref=ar.threeRenderer.xr.getReferenceSpace(); if(!ref)return;
+  const st={source:null,at:null,busy:false,stopped:false,last:0};
+  floorLock=st;
+  const remake=async(pos)=>{
+    if(st.busy)return; st.busy=true;
+    try{
+      const next=await session.requestHitTestSource({space:ref,offsetRay:new XRRay({x:pos.x,y:pos.y+1.5,z:pos.z,w:1},{x:0,y:-1,z:0,w:0})});
+      const old=st.source; st.source=next; st.at={x:pos.x,z:pos.z}; old?.cancel();
+    }catch(e){st.stopped=true}
+    st.busy=false;
+  };
+  const tick=(t,frame)=>{
+    if(st.stopped||!ar.currentSession)return;
+    session.requestAnimationFrame(tick);
+    const scene=ar.presentedScene; if(!scene)return;
+    const pos=ar.isTranslating?ar.goalPosition:scene.position;
+    // re-aim the ray when the model has been moved (> 10 cm) or every 2 s
+    if(!st.source||!st.at||Math.hypot(pos.x-st.at.x,pos.z-st.at.z)>.1||t-st.last>2000){st.last=t;remake(pos);if(!st.source)return}
+    if(ar.isTranslating||ar.isTwoFingering)return;
+    let hits; try{hits=frame.getHitTestResults(st.source)}catch{return} if(!hits.length)return;
+    const pose=hits[0].getPose(ref); if(!pose)return;
+    const m=pose.transform.matrix; if(m[5]<.75)return; // only surfaces facing up
+    const y=pose.transform.position.y;
+    if(y<pos.y+0.6&&Math.abs(ar.goalPosition.y-y)>.008)ar.goalPosition.y=y; // ignore tables far above
+  };
+  session.requestAnimationFrame(tick);
+}
+function stopFloorLock(){if(floorLock){floorLock.stopped=true;floorLock.source?.cancel();floorLock=null}}
+
 arbtn.onclick=()=>{
   if(mv.canActivateAR&&mv.loaded){
     arbtn.classList.add('is-busy'); arlabel.textContent='Запускаем AR…';
-    mv.activateAR();
+    // WebXR drops the model in front of you at the page camera's distance (~3.5 m in the
+    // gallery), which makes true-size furniture look tiny. Start AR from a room-scale distance.
+    const o=mv.getCameraOrbit(), d=mv.getDimensions();
+    arSavedOrbit=o.toString();
+    const dist=Math.min(2.4,Math.max(1.5,1.1+Math.max(d.x,d.z)));
+    mv.cameraOrbit=`${o.theta}rad ${o.phi}rad ${dist}m`; mv.jumpCameraToGoal();
+    mv.activateAR(); // stays inside the tap: browsers require a user gesture for AR
+    setTimeout(()=>{if(mv.getAttribute('ar-status')!=='session-started'&&mv.getAttribute('ar-status')!=='object-placed')restoreOrbit()},8000);
     setTimeout(()=>{arbtn.classList.remove('is-busy');updateArLabel()},6000); // Quick Look sends no status
   } else if(mv.canActivateAR){
     toast('Модель ещё загружается — нажмите через пару секунд.');
@@ -713,8 +759,8 @@ mv.addEventListener('ar-status',e=>{
       el.classList.toggle('is-off',!real);
     },150);
   }
-  if(s==='object-placed'){clearTimeout(tipsTimer);tipsTimer=setTimeout(()=>$('arTips').classList.add('is-hidden'),9000)}
-  if(s==='not-presenting'||s==='failed'){clearInterval(arPoll);clearTimeout(tipsTimer)}
+  if(s==='object-placed'){clearTimeout(tipsTimer);tipsTimer=setTimeout(()=>$('arTips').classList.add('is-hidden'),9000);startFloorLock()}
+  if(s==='not-presenting'||s==='failed'){clearInterval(arPoll);clearTimeout(tipsTimer);stopFloorLock();restoreOrbit()}
 });
 mv.addEventListener('ar-tracking',e=>{if(e.detail.status==='not-tracking')toast('Камера потеряла пол — поводите телефоном медленнее.')});
 // real size, measured from the model (models are baked at true scale, see models.json)
