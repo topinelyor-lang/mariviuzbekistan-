@@ -374,9 +374,9 @@ model-viewer[ar-status="object-placed"] .arhud__tips{bottom:calc(max(24px,env(sa
       camera-controls disable-zoom disable-pan auto-rotate auto-rotate-delay="2500" rotation-per-second="14deg"
       interaction-prompt="none" camera-orbit="-24deg 78deg 128%" field-of-view="26deg" min-camera-orbit="auto 55deg auto" max-camera-orbit="auto 92deg auto"
       shadow-intensity="1.15" shadow-softness=".9" exposure="1.02" tone-mapping="neutral" environment-image="neutral">
-      <button class="hs" slot="hotspot-back" data-position="0m 0.6m -0.08m" data-normal="0 0 1"><span class="tip"><b>Сюзане «Xo'roz»</b>Тамбурный шов, шёлк по хлопку</span></button>
-      <button class="hs" slot="hotspot-seat" data-position="0.14m 0.37m 0.17m" data-normal="0 1 0"><span class="tip"><b>Адрас</b>Ручное ткачество, Маргилан</span></button>
-      <button class="hs" slot="hotspot-leg" data-position="0.26m 0.09m 0.16m" data-normal="0 0 1"><span class="tip"><b>Ножки</b>Бук, масло и воск</span></button>
+      <button class="hs" slot="hotspot-back" data-position="0m 0.68m -0.09m" data-normal="0 0 1"><span class="tip"><b>Сюзане «Xo'roz»</b>Тамбурный шов, шёлк по хлопку</span></button>
+      <button class="hs" slot="hotspot-seat" data-position="0.16m 0.42m 0.19m" data-normal="0 1 0"><span class="tip"><b>Адрас</b>Ручное ткачество, Маргилан</span></button>
+      <button class="hs" slot="hotspot-leg" data-position="0.3m 0.1m 0.18m" data-normal="0 0 1"><span class="tip"><b>Ножки</b>Бук, масло и воск</span></button>
       <div slot="progress-bar"></div>
     </model-viewer>
     <div class="loader" aria-live="polite">Yuklanmoqda <i></i></div>
@@ -514,7 +514,7 @@ const words=["Suzani","Adras","Yong'oq & buk","Qo'l mehnati","Buxoro","Marg'ilon
 document.getElementById('run').innerHTML=[...words,...words].map(w=>`<span>${w}</span>`).join('');
 // ── models: phone build vs desktop build ─────────
 // Bump MODELS_V after `npm run optimize` so browsers drop cached models.
-const MODELS_V='4';
+const MODELS_V='5';
 // Phones and low-memory devices get the light build (1024px textures, ~half the triangles):
 // the desktop build needs ~70 MB of GPU memory per model, which phones often can't spare.
 const LIGHT=matchMedia('(pointer:coarse)').matches||innerWidth<820||(navigator.deviceMemory||8)<=4;
@@ -693,45 +693,7 @@ function startFloorLock(){
 }
 function stopFloorLock(){if(floorLock){floorLock.stopped=true;floorLock.source?.cancel();floorLock=null}}
 
-// ── Android: Google Scene Viewer ────────────────
-// Android opens the piece in Google's Scene Viewer: it finds the floor fast (even glossy tiles),
-// stands the model on it at true size and has its own move / rotate / resize gestures.
-// It reads a dedicated file (models/ar/: JPEG + Draco — Scene Viewer doesn't take WebP).
-// If Scene Viewer is missing, the intent bounces back to #no-scene-viewer and the next tap
-// uses the in-browser WebXR AR instead.
-const IS_ANDROID=/android/i.test(navigator.userAgent);
-let sceneViewerBlocked=false;
-function openSceneViewer(){
-  const it=items[cur];
-  const page=`${location.origin}${location.pathname}?item=${cur+1}#korgazma`;
-  const params=new URLSearchParams({
-    file:new URL(`models/ar/${it.f}.glb?v=${MODELS_V}`,location.href).href,
-    mode:'ar_preferred', title:`${it.name} · ${it.sub}`, link:page,
-    resizable:'true', disable_occlusion:'true',
-  });
-  const fallback=`${location.origin}${location.pathname}${location.search}#no-scene-viewer`;
-  const intent=`intent://arvr.google.com/scene-viewer/1.2?${params}#Intent;scheme=https;package=com.google.android.googlequicksearchbox;action=android.intent.action.VIEW;S.browser_fallback_url=${encodeURIComponent(fallback)};end;`;
-  // If Scene Viewer really opens, this page goes to the background. If after 2.5 s it is still
-  // in front, nothing opened: say so and let the next tap use the in-browser AR.
-  let left=false; const gone=()=>{left=true};
-  addEventListener('blur',gone,{once:true}); addEventListener('pagehide',gone,{once:true});
-  document.addEventListener('visibilitychange',gone,{once:true});
-  setTimeout(()=>{
-    removeEventListener('blur',gone); removeEventListener('pagehide',gone); document.removeEventListener('visibilitychange',gone);
-    if(!left&&document.visibilityState==='visible'){sceneViewerBlocked=true;toast('Google Scene Viewer не открылся. Нажмите «AR в комнате» ещё раз — откроем AR прямо в браузере.',7000)}
-  },2500);
-  location.href=intent;
-}
-function sceneViewerMissing(){
-  sceneViewerBlocked=true;
-  history.replaceState(null,'',`${location.pathname}${location.search}#korgazma`);
-  toast('Google Scene Viewer недоступен. Нажмите «AR в комнате» ещё раз — откроем AR в браузере.',6000);
-}
-addEventListener('hashchange',()=>{if(location.hash==='#no-scene-viewer')sceneViewerMissing()});
-if(location.hash==='#no-scene-viewer')setTimeout(sceneViewerMissing,0); // fallback may reload the page
-
 arbtn.onclick=()=>{
-  if(IS_ANDROID&&!sceneViewerBlocked){openSceneViewer();return} // Scene Viewer downloads the file itself
   if(mv.canActivateAR&&mv.loaded){
     arbtn.classList.add('is-busy'); arlabel.textContent='Запускаем AR…';
     // WebXR drops the model in front of you at the page camera's distance (~3.5 m in the

@@ -1,10 +1,31 @@
 {
-  "_comment": "Real size of each piece, used to scale models for AR (1 unit = 1 m). Give heightCm when the brand confirms the exact total height. Until then sizes come from a natural seat height: seatCm 44 (typical lounge chair), topCm 44 for the ottoman. Run `node scripts/analyze-models.mjs` to preview, then `npm run optimize`.",
-  "m1": { "name": "Lagan",  "topCm": 44 },
-  "m2": { "name": "Qayiq",  "seatCm": 44 },
-  "m3": { "name": "Lola",   "seatCm": 44 },
-  "m4": { "name": "Qush",   "seatCm": 44 },
-  "m5": { "name": "Tun",    "seatCm": 44 },
-  "m6": { "name": "Anor",   "seatCm": 44 },
-  "m7": { "name": "Xo'roz", "seatCm": 44 }
+  "_comment": "Real size of each piece, used to scale models for AR (1 unit = 1 m). Give heightCm when the brand confirms the exact total height. Until then sizes come from a seat height of 50 cm (upholstered armchairs: 45–50) and a 48 cm ottoman, so pieces read at full natural size in AR. Preview with `node scripts/analyze-models.mjs`, then `npm run optimize`.",
+  "m1": {
+    "name": "Lagan",
+    "topCm": 48
+  },
+  "m2": {
+    "name": "Qayiq",
+    "seatCm": 50
+  },
+  "m3": {
+    "name": "Lola",
+    "seatCm": 50
+  },
+  "m4": {
+    "name": "Qush",
+    "seatCm": 50
+  },
+  "m5": {
+    "name": "Tun",
+    "seatCm": 50
+  },
+  "m6": {
+    "name": "Anor",
+    "seatCm": 50
+  },
+  "m7": {
+    "name": "Xo'roz",
+    "seatCm": 50
+  }
 }
