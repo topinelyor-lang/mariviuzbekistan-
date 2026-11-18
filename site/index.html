@@ -197,20 +197,20 @@ body.no-scroll{overflow:hidden}
 /* in-AR overlay (WebXR) */
 .arhud{display:none;position:absolute;inset:0;pointer-events:none;font-family:var(--sans)}
 model-viewer[ar-status="session-started"] .arhud,model-viewer[ar-status="object-placed"] .arhud{display:block}
-.arhud__top{position:absolute;top:max(16px,env(safe-area-inset-top));right:16px;display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.arhud__top{position:absolute;top:max(16px,env(safe-area-inset-top));left:16px;right:72px;display:flex;flex-direction:column;align-items:flex-start;gap:6px}
 .arhud__top b{font:400 22px/1 var(--serif);color:#fff;text-shadow:0 1px 8px rgba(0,0,0,.5)}
 .arhud__scale{pointer-events:auto;border:0;font-family:var(--sans);max-width:calc(100vw - 32px);white-space:nowrap;font-size:13px;padding:7px 11px;border-radius:999px;background:var(--kobalt);color:#fff;transition:background .2s}
 .arhud__scale.is-off{background:var(--gisht)}
 .arhud__find{position:absolute;left:50%;top:46%;transform:translate(-50%,-50%);width:min(300px,80%);margin:0;text-align:center;font-size:15px;color:#fff;background:rgba(21,22,28,.6);padding:12px 16px}
 model-viewer[ar-status="object-placed"] .arhud__find{display:none}
-.arhud__tips{position:absolute;left:16px;right:16px;bottom:max(24px,env(safe-area-inset-bottom));margin:0;padding:14px 16px;list-style:none;display:grid;gap:10px;background:rgba(251,248,241,.94);color:var(--siyoh);font-size:13.5px;line-height:1.35;transition:opacity .6s}
-.arhud__tips li{display:grid;grid-template-columns:24px 1fr;gap:10px;align-items:center}
-.arhud__tips svg{width:22px;height:22px;fill:none;stroke:var(--kobalt);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.arhud__tips{position:absolute;left:50%;transform:translateX(-50%);width:min(340px,calc(100% - 32px));bottom:max(24px,env(safe-area-inset-bottom));margin:0;padding:10px 12px;list-style:none;display:grid;gap:6px;background:rgba(251,248,241,.9);color:var(--siyoh);font-size:12.5px;line-height:1.3;border-radius:12px;transition:opacity .5s}
+.arhud__tips li{display:grid;grid-template-columns:18px 1fr;gap:8px;align-items:center}
+.arhud__tips svg{width:18px;height:18px;fill:none;stroke:var(--kobalt);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 .arhud__tips b{font-weight:600;color:var(--kobalt)}
 .arhud__tips.is-hidden{opacity:0}
 .arhud__bar{display:none;position:absolute;left:50%;transform:translateX(-50%);bottom:max(24px,env(safe-area-inset-bottom));gap:8px;pointer-events:auto}
 model-viewer[ar-status="object-placed"] .arhud__bar{display:flex}
-model-viewer[ar-status="object-placed"] .arhud__tips{bottom:calc(max(24px,env(safe-area-inset-bottom)) + 84px)}
+model-viewer[ar-status="object-placed"] .arhud__tips{bottom:calc(max(24px,env(safe-area-inset-bottom)) + 80px)}
 .arhud__bar button{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:84px;padding:10px 8px 8px;border:0;border-radius:14px;background:rgba(251,248,241,.95);color:var(--kobalt);font:500 12px/1 var(--sans);box-shadow:0 6px 20px -8px rgba(0,0,0,.5)}
 .arhud__bar button:active{background:var(--kobalt);color:#fff}
 .arhud__bar svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
@@ -433,9 +433,9 @@ model-viewer[ar-status="object-placed"] .arhud__tips{bottom:calc(max(24px,env(sa
               </div>
               <p class="arhud__find" id="arFind">Медленно поводите телефоном и наведите камеру на пол</p>
               <ul class="arhud__tips" id="arTips">
-                <li><svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/></svg><span>Палец на предмете — <b>переместить</b> по полу</span></li>
-                <li><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v4.5h-4.5"/></svg><span>Палец рядом, влево-вправо — <b>повернуть</b></span></li>
-                <li><svg viewBox="0 0 24 24"><path d="M9 15 4 20M4 20v-4M4 20h4M15 9l5-5M20 4v4M20 4h-4"/></svg><span>Два пальца — <b>развернуть и изменить размер</b>. Около 100% размер сам вернётся к натуральному</span></li>
+                <li><svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/></svg><span>Палец на предмете — <b>переместить</b></span></li>
+                <li><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v4.5h-4.5"/></svg><span>Палец рядом — <b>повернуть</b></span></li>
+                <li><svg viewBox="0 0 24 24"><path d="M9 15 4 20M4 20v-4M4 20h4M15 9l5-5M20 4v4M20 4h-4"/></svg><span>Два пальца — <b>размер</b> (у 100% вернётся к натуральному)</span></li>
               </ul>
             </div></model-viewer>
           <div class="viewbar" role="toolbar" aria-label="Управление видом">
@@ -745,10 +745,15 @@ arControls.addEventListener('click',e=>{
 function arScene(){ // model-viewer keeps its scene under a private symbol
   for(const k of Object.getOwnPropertySymbols(mv)){const v=mv[k];if(v&&typeof v==='object'&&'canScale' in v&&v.scale)return v}
 }
-let arPoll, tipsTimer;
+let arPoll, tipsTimer, arLook=null;
+// tips go away at the first touch in AR
+mv.addEventListener('pointerdown',()=>{if(mv.getAttribute('ar-status')==='object-placed')$('arTips').classList.add('is-hidden')});
 mv.addEventListener('ar-status',e=>{
   const s=e.detail.status;
   if(s==='session-started'){
+    // grounded look in a real room: crisp contact shadow under the feet, a bit less exposure
+    if(!arLook)arLook={soft:mv.shadowSoftness,exp:mv.exposure};
+    mv.shadowSoftness=.2; mv.exposure=.85;
     $('arName').textContent=items[cur].name; $('arTips').classList.remove('is-hidden');
     const sc=arScene(), el=$('arScale');
     el.style.display=sc?'':'none';
@@ -759,8 +764,8 @@ mv.addEventListener('ar-status',e=>{
       el.classList.toggle('is-off',!real);
     },150);
   }
-  if(s==='object-placed'){clearTimeout(tipsTimer);tipsTimer=setTimeout(()=>$('arTips').classList.add('is-hidden'),9000);startFloorLock()}
-  if(s==='not-presenting'||s==='failed'){clearInterval(arPoll);clearTimeout(tipsTimer);stopFloorLock();restoreOrbit()}
+  if(s==='object-placed'){clearTimeout(tipsTimer);tipsTimer=setTimeout(()=>$('arTips').classList.add('is-hidden'),5000);startFloorLock()}
+  if(s==='not-presenting'||s==='failed'){clearInterval(arPoll);clearTimeout(tipsTimer);stopFloorLock();restoreOrbit();if(arLook){mv.shadowSoftness=arLook.soft;mv.exposure=arLook.exp;arLook=null}}
 });
 mv.addEventListener('ar-tracking',e=>{if(e.detail.status==='not-tracking')toast('Камера потеряла пол — поводите телефоном медленнее.')});
 // real size, measured from the model (models are baked at true scale, see models.json)
