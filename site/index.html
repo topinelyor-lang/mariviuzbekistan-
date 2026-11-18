@@ -191,6 +191,21 @@ h1 .k path{stroke:var(--anor);stroke-width:3;fill:none;stroke-linecap:round;stro
 .arch.is-expanded .viewclose:hover{background:var(--kobalt)}
 body.no-scroll{overflow:hidden}
 
+/* in-AR overlay (WebXR) */
+.arhud{display:none;position:absolute;inset:0;pointer-events:none;font-family:var(--sans)}
+model-viewer[ar-status="session-started"] .arhud,model-viewer[ar-status="object-placed"] .arhud{display:block}
+.arhud__top{position:absolute;top:max(16px,env(safe-area-inset-top));right:16px;display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.arhud__top b{font:400 22px/1 var(--serif);color:#fff;text-shadow:0 1px 8px rgba(0,0,0,.5)}
+.arhud__scale{max-width:calc(100vw - 32px);white-space:nowrap;font-size:13px;padding:7px 11px;border-radius:999px;background:var(--kobalt);color:#fff;transition:background .2s}
+.arhud__scale.is-off{background:var(--gisht)}
+.arhud__find{position:absolute;left:50%;top:46%;transform:translate(-50%,-50%);width:min(300px,80%);margin:0;text-align:center;font-size:15px;color:#fff;background:rgba(21,22,28,.6);padding:12px 16px}
+model-viewer[ar-status="object-placed"] .arhud__find{display:none}
+.arhud__tips{position:absolute;left:16px;right:16px;bottom:max(24px,env(safe-area-inset-bottom));margin:0;padding:14px 16px;list-style:none;display:grid;gap:10px;background:rgba(251,248,241,.94);color:var(--siyoh);font-size:13.5px;line-height:1.35;transition:opacity .6s}
+.arhud__tips li{display:grid;grid-template-columns:24px 1fr;gap:10px;align-items:center}
+.arhud__tips svg{width:22px;height:22px;fill:none;stroke:var(--kobalt);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.arhud__tips b{font-weight:600;color:var(--kobalt)}
+.arhud__tips.is-hidden{opacity:0}
+
 /* AR button, QR dialog, toast */
 .btn--ar svg{width:16px;height:16px;flex:none}
 .btn--ar.is-busy{pointer-events:none;opacity:.6}
@@ -397,7 +412,17 @@ body.no-scroll{overflow:hidden}
             interaction-prompt="none" camera-orbit="-22deg 78deg 118%" field-of-view="24deg" min-field-of-view="8deg" max-field-of-view="30deg"
             min-camera-orbit="auto 25deg 22%" max-camera-orbit="auto 92deg 140%" interpolation-decay="120"
             shadow-intensity="1.2" shadow-softness=".85" exposure="1.0" tone-mapping="neutral" environment-image="neutral"
-            ar ar-modes="webxr scene-viewer quick-look" ar-placement="floor" ar-scale="fixed" xr-environment><div slot="progress-bar"></div><button slot="ar-button" hidden></button></model-viewer>
+            ar ar-modes="webxr scene-viewer quick-look" ar-placement="floor" ar-scale="auto" xr-environment><div slot="progress-bar"></div><button slot="ar-button" hidden></button>
+            <!-- shown over the camera during a WebXR session (default slot = DOM overlay root) -->
+            <div class="arhud" aria-hidden="true">
+              <div class="arhud__top"><b id="arName">Qush</b><span class="arhud__scale" id="arScale">100% · натуральная величина</span></div>
+              <p class="arhud__find" id="arFind">Медленно поводите телефоном и наведите камеру на пол</p>
+              <ul class="arhud__tips" id="arTips">
+                <li><svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/></svg><span>Палец на предмете — <b>переместить</b> по полу</span></li>
+                <li><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v4.5h-4.5"/></svg><span>Палец рядом, влево-вправо — <b>повернуть</b></span></li>
+                <li><svg viewBox="0 0 24 24"><path d="M9 15 4 20M4 20v-4M4 20h4M15 9l5-5M20 4v4M20 4h-4"/></svg><span>Два пальца — <b>развернуть и изменить размер</b>. Около 100% размер сам вернётся к натуральному</span></li>
+              </ul>
+            </div></model-viewer>
           <div class="viewbar" role="toolbar" aria-label="Управление видом">
             <button type="button" data-act="out" aria-label="Отдалить" title="Отдалить"><svg viewBox="0 0 16 16"><path d="M3.5 8h9"/></svg></button>
             <button type="button" data-act="in" aria-label="Приблизить" title="Приблизить"><svg viewBox="0 0 16 16"><path d="M3.5 8h9M8 3.5v9"/></svg></button>
@@ -453,7 +478,7 @@ body.no-scroll{overflow:hidden}
   <ol>
     <li>Наведите камеру телефона на код.</li>
     <li>Нажмите «AR в комнате» и наведите камеру на пол.</li>
-    <li>Предмет встанет в натуральную величину — обойдите его вокруг.</li>
+    <li>Предмет встанет в натуральную величину. Двигайте его пальцем, поворачивайте и меняйте размер двумя пальцами.</li>
   </ol>
   <p class="qr__note">iPhone и iPad с iOS 12+, Android с поддержкой ARCore.</p>
 </dialog>
@@ -608,9 +633,30 @@ arbtn.onclick=()=>{
 };
 mv.addEventListener('ar-status',e=>{
   const s=e.detail.status;
-  if(s==='session-started'){arbtn.classList.remove('is-busy');updateArLabel();toast('Медленно поводите телефоном и наведите камеру на пол.')}
+  if(s==='session-started'){arbtn.classList.remove('is-busy');updateArLabel()}
   if(s==='failed'){arbtn.classList.remove('is-busy');updateArLabel();toast('Не удалось запустить AR. Проверьте доступ к камере и попробуйте ещё раз.',6000)}
   if(s==='not-presenting'){arbtn.classList.remove('is-busy');updateArLabel()}
+});
+// in-AR HUD: live scale (snaps to 100% near true size) and gesture tips
+function arScene(){ // model-viewer keeps its scene under a private symbol
+  for(const k of Object.getOwnPropertySymbols(mv)){const v=mv[k];if(v&&typeof v==='object'&&'canScale' in v&&v.scale)return v}
+}
+let arPoll, tipsTimer;
+mv.addEventListener('ar-status',e=>{
+  const s=e.detail.status;
+  if(s==='session-started'){
+    $('arName').textContent=items[cur].name; $('arTips').classList.remove('is-hidden');
+    const sc=arScene(), el=$('arScale');
+    el.style.display=sc?'':'none';
+    clearInterval(arPoll);
+    if(sc)arPoll=setInterval(()=>{
+      const p=Math.round(sc.scale.x*100), real=Math.abs(p-100)<1;
+      el.textContent=real?'100% · натуральная величина':`${p}% · реальный размер — 100%`;
+      el.classList.toggle('is-off',!real);
+    },150);
+  }
+  if(s==='object-placed'){clearTimeout(tipsTimer);tipsTimer=setTimeout(()=>$('arTips').classList.add('is-hidden'),9000)}
+  if(s==='not-presenting'||s==='failed'){clearInterval(arPoll);clearTimeout(tipsTimer)}
 });
 mv.addEventListener('ar-tracking',e=>{if(e.detail.status==='not-tracking')toast('Камера потеряла пол — поводите телефоном медленнее.')});
 // real size, measured from the model (models are baked at true scale, see models.json)
