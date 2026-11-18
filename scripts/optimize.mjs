@@ -11,6 +11,8 @@ import { join, basename } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { NodeIO, getBounds } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
+import { measure } from './measure.mjs';
+import { targetHeightCm } from './sizes.mjs';
 
 const SRC = 'source-models';
 // Two builds of every model: full quality for desktop, a light one for phones
@@ -37,6 +39,13 @@ if (!files.length) {
 }
 
 const io = new NodeIO().registerExtensions(ALL_EXTENSIONS);
+// Real height per model, measured once on the full-detail source so both builds match.
+const target = {};
+for (const f of files) {
+  const id = basename(f, '.glb');
+  const src = await io.read(join(SRC, f));
+  target[id] = targetHeightCm(sizes[id], measure(src.getRoot().listScenes()[0]));
+}
 const mb = (p) => (statSync(p).size / 1048576).toFixed(2) + ' MB';
 
 for (const { out: OUT, textureSize: TEXTURE_SIZE, simplifyRatio: SIMPLIFY_RATIO } of VARIANTS) {
@@ -44,8 +53,7 @@ mkdirSync(OUT, { recursive: true });
 console.log(`\n${OUT}  (textures ${TEXTURE_SIZE}px, simplify ${SIMPLIFY_RATIO})`);
 for (const f of files) {
   const id = basename(f, '.glb');
-  const heightCm = sizes[id]?.heightCm;
-  if (!heightCm) { console.error(`${id}: no heightCm in models.json — skipped`); continue; }
+  const heightCm = target[id].cm;
 
   const input = join(SRC, f);
   const tmp = join(OUT, `.${id}.tmp.glb`);
@@ -62,15 +70,14 @@ for (const f of files) {
     '--simplify-error', SIMPLIFY_ERROR,
   ], { stdio: ['ignore', 'ignore', 'inherit'] });
 
-  // Scale to real height (1 unit = 1 metre) and stand the model on the floor (min y = 0).
-  // Done with a wrapper node so it also holds for Android Scene Viewer, which reads the file directly.
+  // Scale to real height (1 unit = 1 metre), centre the footprint and put the feet exactly
+  // at y = 0 (floorY ignores stray vertices below the feet, which would make it float in AR).
+  // A wrapper node keeps this for Android Scene Viewer and iOS Quick Look, which use the file as is.
   const doc = await io.read(tmp);
   const scene = doc.getRoot().getDefaultScene() ?? doc.getRoot().listScenes()[0];
-  const { min, max } = getBounds(scene);
-  const s = heightCm / 100 / (max[1] - min[1]);
-  const root = doc.createNode('real-size').setScale([s, s, s]).setTranslation([
-    -((min[0] + max[0]) / 2) * s, -min[1] * s, -((min[2] + max[2]) / 2) * s,
-  ]);
+  const m = measure(scene);
+  const s = heightCm / 100 / m.H;
+  const root = doc.createNode('real-size').setScale([s, s, s]).setTranslation([-m.cx * s, -m.floorY * s, -m.cz * s]);
   for (const child of scene.listChildren()) { scene.removeChild(child); root.addChild(child); }
   scene.addChild(root);
   await io.write(output, doc);
@@ -78,6 +85,7 @@ for (const f of files) {
 
   const b = getBounds(scene);
   const cm = (i) => Math.round((b.max[i] - b.min[i]) * 100);
-  console.log(`${f.padEnd(8)} ${mb(input).padStart(9)} → ${mb(output).padStart(8)}   ${cm(0)} × ${cm(2)} × ${cm(1)} cm (W×D×H)`);
+  if (Math.abs(b.min[1]) > 0.003) console.warn(`  ! ${id}: lowest point at ${(b.min[1] * 100).toFixed(1)} cm (stray geometry below the feet)`);
+  console.log(`${f.padEnd(8)} ${mb(input).padStart(9)} → ${mb(output).padStart(8)}   ${cm(0)} × ${cm(2)} × ${cm(1)} cm (W×D×H), feet at y=${(b.min[1] * 100).toFixed(1)} cm   [${target[id].from}]`);
 }
 }

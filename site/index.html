@@ -374,9 +374,9 @@ model-viewer[ar-status="object-placed"] .arhud__tips{bottom:calc(max(24px,env(sa
       camera-controls disable-zoom disable-pan auto-rotate auto-rotate-delay="2500" rotation-per-second="14deg"
       interaction-prompt="none" camera-orbit="-24deg 78deg 128%" field-of-view="26deg" min-camera-orbit="auto 55deg auto" max-camera-orbit="auto 92deg auto"
       shadow-intensity="1.15" shadow-softness=".9" exposure="1.02" tone-mapping="neutral" environment-image="neutral">
-      <button class="hs" slot="hotspot-back" data-position="0m 0.71m -0.09m" data-normal="0 0 1"><span class="tip"><b>Сюзане «Xo'roz»</b>Тамбурный шов, шёлк по хлопку</span></button>
-      <button class="hs" slot="hotspot-seat" data-position="0.16m 0.43m 0.2m" data-normal="0 1 0"><span class="tip"><b>Адрас</b>Ручное ткачество, Маргилан</span></button>
-      <button class="hs" slot="hotspot-leg" data-position="0.3m 0.1m 0.19m" data-normal="0 0 1"><span class="tip"><b>Ножки</b>Бук, масло и воск</span></button>
+      <button class="hs" slot="hotspot-back" data-position="0m 0.6m -0.08m" data-normal="0 0 1"><span class="tip"><b>Сюзане «Xo'roz»</b>Тамбурный шов, шёлк по хлопку</span></button>
+      <button class="hs" slot="hotspot-seat" data-position="0.14m 0.37m 0.17m" data-normal="0 1 0"><span class="tip"><b>Адрас</b>Ручное ткачество, Маргилан</span></button>
+      <button class="hs" slot="hotspot-leg" data-position="0.26m 0.09m 0.16m" data-normal="0 0 1"><span class="tip"><b>Ножки</b>Бук, масло и воск</span></button>
       <div slot="progress-bar"></div>
     </model-viewer>
     <div class="loader" aria-live="polite">Yuklanmoqda <i></i></div>
@@ -514,7 +514,7 @@ const words=["Suzani","Adras","Yong'oq & buk","Qo'l mehnati","Buxoro","Marg'ilon
 document.getElementById('run').innerHTML=[...words,...words].map(w=>`<span>${w}</span>`).join('');
 // ── models: phone build vs desktop build ─────────
 // Bump MODELS_V after `npm run optimize` so browsers drop cached models.
-const MODELS_V='3';
+const MODELS_V='4';
 // Phones and low-memory devices get the light build (1024px textures, ~half the triangles):
 // the desktop build needs ~70 MB of GPU memory per model, which phones often can't spare.
 const LIGHT=matchMedia('(pointer:coarse)').matches||innerWidth<820||(navigator.deviceMemory||8)<=4;
