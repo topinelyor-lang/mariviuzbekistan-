@@ -693,7 +693,37 @@ function startFloorLock(){
 }
 function stopFloorLock(){if(floorLock){floorLock.stopped=true;floorLock.source?.cancel();floorLock=null}}
 
+// ── Android: Google Scene Viewer ────────────────
+// Android opens the piece in Google's Scene Viewer: it finds the floor fast (even glossy tiles),
+// stands the model on it at true size and has its own move / rotate / resize gestures.
+// It reads a dedicated file (models/ar/: JPEG + Draco — Scene Viewer doesn't take WebP).
+// If Scene Viewer is missing, the intent bounces back to #no-scene-viewer and the next tap
+// uses the in-browser WebXR AR instead.
+const IS_ANDROID=/android/i.test(navigator.userAgent);
+let sceneViewerBlocked=false;
+function openSceneViewer(){
+  const it=items[cur];
+  const page=`${location.origin}${location.pathname}?item=${cur+1}#korgazma`;
+  const params=new URLSearchParams({
+    file:new URL(`models/ar/${it.f}.glb?v=${MODELS_V}`,location.href).href,
+    mode:'ar_preferred', title:`${it.name} · ${it.sub}`, link:page,
+    resizable:'true', disable_occlusion:'true',
+  });
+  const fallback=`${location.origin}${location.pathname}${location.search}#no-scene-viewer`;
+  const a=document.createElement('a');
+  a.href=`intent://arvr.google.com/scene-viewer/1.2?${params}#Intent;scheme=https;package=com.google.android.googlequicksearchbox;action=android.intent.action.VIEW;S.browser_fallback_url=${encodeURIComponent(fallback)};end;`;
+  a.click();
+}
+function sceneViewerMissing(){
+  sceneViewerBlocked=true;
+  history.replaceState(null,'',`${location.pathname}${location.search}#korgazma`);
+  toast('Google Scene Viewer недоступен. Нажмите «AR в комнате» ещё раз — откроем AR в браузере.',6000);
+}
+addEventListener('hashchange',()=>{if(location.hash==='#no-scene-viewer')sceneViewerMissing()});
+if(location.hash==='#no-scene-viewer')setTimeout(sceneViewerMissing,0); // fallback may reload the page
+
 arbtn.onclick=()=>{
+  if(IS_ANDROID&&!sceneViewerBlocked&&mv.loaded){openSceneViewer();return}
   if(mv.canActivateAR&&mv.loaded){
     arbtn.classList.add('is-busy'); arlabel.textContent='Запускаем AR…';
     // WebXR drops the model in front of you at the page camera's distance (~3.5 m in the
