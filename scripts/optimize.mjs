@@ -1,13 +1,16 @@
-// Optimizes source 3D models (source-models/*.glb) into web-ready files (site/models/*.glb).
+// Optimizes source 3D models (source-models/*.glb) into web-ready files (site/models/*.glb)
+// and scales each one to its real-world height from models.json (needed for AR).
 //
 //   npm run optimize            → all models
 //   npm run optimize:one m4     → a single model
 //
 // Settings can be tuned per run with env vars, e.g.
 //   TEXTURE_SIZE=1024 SIMPLIFY_RATIO=0.3 npm run optimize
-import { readdirSync, mkdirSync, statSync } from 'node:fs';
+import { readdirSync, readFileSync, mkdirSync, statSync, rmSync } from 'node:fs';
 import { join, basename } from 'node:path';
 import { execFileSync } from 'node:child_process';
+import { NodeIO, getBounds } from '@gltf-transform/core';
+import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
 
 const SRC = 'source-models';
 const OUT = join('site', 'models');
@@ -16,6 +19,7 @@ const SIMPLIFY_RATIO = process.env.SIMPLIFY_RATIO ?? '0.2'; // ~400k → ~80k tr
 const SIMPLIFY_ERROR = process.env.SIMPLIFY_ERROR ?? '0.0005';
 const COMPRESS = process.env.COMPRESS ?? 'quantize';        // quantize | draco
 
+const sizes = JSON.parse(readFileSync('models.json', 'utf8'));
 const onlyIdx = process.argv.indexOf('--only');
 const only = onlyIdx > -1 ? process.argv[onlyIdx + 1]?.replace(/\.glb$/, '') : null;
 
@@ -30,21 +34,44 @@ if (!files.length) {
 }
 
 mkdirSync(OUT, { recursive: true });
+const io = new NodeIO().registerExtensions(ALL_EXTENSIONS);
 const mb = (p) => (statSync(p).size / 1048576).toFixed(2) + ' MB';
 
 for (const f of files) {
+  const id = basename(f, '.glb');
+  const heightCm = sizes[id]?.heightCm;
+  if (!heightCm) { console.error(`${id}: no heightCm in models.json — skipped`); continue; }
+
   const input = join(SRC, f);
+  const tmp = join(OUT, `.${id}.tmp.glb`);
   const output = join(OUT, f);
+
   execFileSync('npx', [
-    'gltf-transform', 'optimize', input, output,
+    'gltf-transform', 'optimize', input, tmp,
     // 'quantize' (KHR_mesh_quantization) loads natively in <model-viewer>.
-    // Do NOT use 'meshopt' here: model-viewer has no meshopt decoder by default,
-    // so such files silently fail to show.
+    // Do NOT use 'meshopt' here: model-viewer has no meshopt decoder by default.
     '--compress', COMPRESS,
     '--texture-compress', 'webp',
     '--texture-size', TEXTURE_SIZE,
     '--simplify-ratio', SIMPLIFY_RATIO,
     '--simplify-error', SIMPLIFY_ERROR,
   ], { stdio: ['ignore', 'ignore', 'inherit'] });
-  console.log(`${f.padEnd(8)} ${mb(input).padStart(9)} → ${mb(output)}`);
+
+  // Scale to real height (1 unit = 1 metre) and stand the model on the floor (min y = 0).
+  // Done with a wrapper node so it also holds for Android Scene Viewer, which reads the file directly.
+  const doc = await io.read(tmp);
+  const scene = doc.getRoot().getDefaultScene() ?? doc.getRoot().listScenes()[0];
+  const { min, max } = getBounds(scene);
+  const s = heightCm / 100 / (max[1] - min[1]);
+  const root = doc.createNode('real-size').setScale([s, s, s]).setTranslation([
+    -((min[0] + max[0]) / 2) * s, -min[1] * s, -((min[2] + max[2]) / 2) * s,
+  ]);
+  for (const child of scene.listChildren()) { scene.removeChild(child); root.addChild(child); }
+  scene.addChild(root);
+  await io.write(output, doc);
+  rmSync(tmp);
+
+  const b = getBounds(scene);
+  const cm = (i) => Math.round((b.max[i] - b.min[i]) * 100);
+  console.log(`${f.padEnd(8)} ${mb(input).padStart(9)} → ${mb(output).padStart(8)}   ${cm(0)} × ${cm(2)} × ${cm(1)} cm (W×D×H)`);
 }

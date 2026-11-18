@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Prata&family=Golos+Text:wght@400;500;600&display=swap" rel="stylesheet">
 <script type="module" src="https://cdn.jsdelivr.net/npm/@google/model-viewer@3.5.0/dist/model-viewer.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js" defer></script>
 <style>
 :root{
   --qogoz:#F2ECDF; --paxta:#FBF8F1; --kobalt:#22398A; --kobalt-deep:#14225A; --tun:#0F1A45;
@@ -82,12 +83,11 @@ h1 .k path{stroke:var(--anor);stroke-width:3;fill:none;stroke-linecap:round;stro
 .loaded .loader{opacity:0}
 .hs{width:14px;height:14px;border-radius:50%;background:var(--paxta);box-shadow:0 0 0 1.5px var(--kobalt),0 0 0 7px rgba(251,248,241,.55);position:relative}
 .hs::after{content:"";position:absolute;inset:4px;border-radius:50%;background:var(--kobalt)}
-.hs[data-visible]{animation:pulse 2.6s infinite}
+.hs{animation:pulse 2.6s infinite}
 @keyframes pulse{50%{box-shadow:0 0 0 1.5px var(--kobalt),0 0 0 11px rgba(251,248,241,0)}}
 .hs .tip{position:absolute;left:calc(100% + 14px);top:50%;transform:translateY(-50%) translateX(-6px);opacity:0;pointer-events:none;white-space:nowrap;background:var(--siyoh);color:var(--paxta);font:400 12.5px/1.35 var(--sans);padding:8px 11px;text-align:left;transition:.25s}
 .hs .tip b{display:block;font:400 14px var(--serif);color:var(--non)}
 .hs:hover .tip,.hs:focus-visible .tip{opacity:1;transform:translateY(-50%)}
-.hs:not([data-visible]){opacity:0;pointer-events:none}
 .tag{position:absolute;right:-1%;top:7%;z-index:4;width:178px;background:var(--paxta);padding:18px 16px 16px;transform:rotate(6deg);transform-origin:50% 0;box-shadow:0 12px 24px -16px rgba(40,30,20,.6);font-size:12px;color:#4a4642;animation:sway 6s ease-in-out infinite}
 @keyframes sway{50%{transform:rotate(3.5deg)}}
 .tag::before{content:"";position:absolute;top:9px;left:50%;width:9px;height:9px;margin-left:-4.5px;border-radius:50%;background:var(--qogoz);box-shadow:inset 0 0 0 1px var(--line)}
@@ -165,6 +165,28 @@ h1 .k path{stroke:var(--anor);stroke-width:3;fill:none;stroke-linecap:round;stro
 .index li button[aria-current="true"]{color:var(--non)}
 .index li button[aria-current="true"] span:first-child::before{content:"◆ ";font-size:8px;vertical-align:2px}
 .band{position:absolute;left:0;right:0;bottom:0;height:30px}.band svg{width:100%;height:100%;display:block}
+
+/* AR button, QR dialog, toast */
+.btn--ar svg{width:16px;height:16px;flex:none}
+.btn--ar.is-busy{pointer-events:none;opacity:.6}
+.btn--ar.is-pulse{animation:arpulse 1.6s ease-in-out 3}
+@keyframes arpulse{50%{box-shadow:0 0 0 6px rgba(214,160,67,.45)}}
+.qr{margin:auto;border:0;padding:34px 32px 28px;max-width:380px;width:calc(100% - 32px);background:var(--paxta);color:var(--siyoh);box-shadow:0 40px 80px -30px rgba(0,0,0,.6)}
+.qr::backdrop{background:rgba(15,26,69,.72);backdrop-filter:blur(3px)}
+.qr[open]{animation:qrIn .35s cubic-bezier(.2,.8,.2,1)}
+@keyframes qrIn{from{opacity:0;transform:translateY(10px)}}
+.qr::before{content:"";position:absolute;inset:7px;border:1px solid var(--line);pointer-events:none}
+.qr small{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--gisht)}
+.qr h3{font:400 28px/1.1 var(--serif);margin:10px 0 20px}
+.qr h3 span{color:var(--kobalt)}
+.qr__code{width:196px;height:196px;padding:12px;background:#fff;border:1px solid var(--line);margin-bottom:20px}
+.qr__code svg{display:block;width:100%;height:100%}
+.qr ol{padding-left:18px;font-size:14px;color:#4a4642;display:grid;gap:6px}
+.qr__note{margin-top:14px;font-size:12px;color:#8a8278}
+.qr__close{position:absolute;top:14px;right:16px;font:400 26px/1 var(--serif);color:#8a8278;z-index:1}
+.qr__close:hover{color:var(--siyoh)}
+.toast{position:fixed;left:50%;bottom:28px;z-index:60;max-width:min(440px,calc(100% - 32px));transform:translate(-50%,20px);opacity:0;pointer-events:none;background:var(--siyoh);color:var(--paxta);padding:13px 18px;font-size:14px;line-height:1.4;transition:opacity .3s,transform .3s}
+.toast.is-on{opacity:1;transform:translate(-50%,0)}
 
 /* ── 03 buyurtma ──────────────────── */
 .buyurtma{position:relative;background:var(--qogoz);padding:110px var(--gut) 40px}
@@ -303,9 +325,9 @@ h1 .k path{stroke:var(--anor);stroke-width:3;fill:none;stroke-linecap:round;stro
       camera-controls disable-zoom disable-pan auto-rotate auto-rotate-delay="2500" rotation-per-second="14deg"
       interaction-prompt="none" camera-orbit="-24deg 78deg 128%" field-of-view="26deg" min-camera-orbit="auto 55deg auto" max-camera-orbit="auto 92deg auto"
       shadow-intensity="1.15" shadow-softness=".9" exposure="1.02" tone-mapping="neutral" environment-image="neutral">
-      <button class="hs" slot="hotspot-back" data-position="0 1.42 -0.18" data-normal="0 0 1"><span class="tip"><b>Сюзане «Xo'roz»</b>Тамбурный шов, шёлк по хлопку</span></button>
-      <button class="hs" slot="hotspot-seat" data-position="0.32 0.86 0.4" data-normal="0 1 0"><span class="tip"><b>Адрас</b>Ручное ткачество, Маргилан</span></button>
-      <button class="hs" slot="hotspot-leg" data-position="0.5 0.18 0.42" data-normal="0 0 1"><span class="tip"><b>Ножки</b>Бук, масло и воск</span></button>
+      <button class="hs" slot="hotspot-back" data-position="0m 0.71m -0.09m" data-normal="0 0 1"><span class="tip"><b>Сюзане «Xo'roz»</b>Тамбурный шов, шёлк по хлопку</span></button>
+      <button class="hs" slot="hotspot-seat" data-position="0.16m 0.43m 0.2m" data-normal="0 1 0"><span class="tip"><b>Адрас</b>Ручное ткачество, Маргилан</span></button>
+      <button class="hs" slot="hotspot-leg" data-position="0.3m 0.1m 0.19m" data-normal="0 0 1"><span class="tip"><b>Ножки</b>Бук, масло и воск</span></button>
       <div slot="progress-bar"></div>
     </model-viewer>
     <div class="loader" aria-live="polite">Yuklanmoqda <i></i></div>
@@ -337,7 +359,7 @@ h1 .k path{stroke:var(--anor);stroke-width:3;fill:none;stroke-linecap:round;stro
       <p class="desc swap" id="desc"></p>
       <div class="row">
         <a class="btn btn--non" href="#buyurtma" id="order">Заказать</a>
-        <button class="btn" id="arbtn" type="button">AR в комнате</button>
+        <button class="btn btn--ar" id="arbtn" type="button"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="M8 1.5 14 5v6l-6 3.5L2 11V5z"/><path d="M2 5l6 3.5L14 5M8 8.5v6"/></svg><span id="arlabel">AR в комнате</span></button>
       </div>
     </article>
 
@@ -349,7 +371,7 @@ h1 .k path{stroke:var(--anor);stroke-width:3;fill:none;stroke-linecap:round;stro
           <model-viewer id="mv" alt="" camera-controls disable-pan disable-zoom auto-rotate auto-rotate-delay="2000" rotation-per-second="10deg"
             interaction-prompt="none" camera-orbit="-22deg 78deg 118%" field-of-view="24deg" min-camera-orbit="auto 60deg auto" max-camera-orbit="auto 90deg auto"
             shadow-intensity="1.2" shadow-softness=".85" exposure="1.0" tone-mapping="neutral" environment-image="neutral"
-            ar ar-modes="webxr scene-viewer quick-look"><div slot="progress-bar"></div><button slot="ar-button" hidden></button></model-viewer>
+            ar ar-modes="webxr scene-viewer quick-look" ar-placement="floor" ar-scale="fixed" xr-environment><div slot="progress-bar"></div><button slot="ar-button" hidden></button></model-viewer>
         </div>
       </div>
       <div class="controls">
@@ -387,6 +409,20 @@ h1 .k path{stroke:var(--anor);stroke-width:3;fill:none;stroke-linecap:round;stro
 </section>
 </main>
 
+<dialog class="qr" id="qrDialog" aria-labelledby="qrTitle">
+  <form method="dialog"><button class="qr__close" aria-label="Закрыть">×</button></form>
+  <small>AR · Xonangizda</small>
+  <h3 id="qrTitle">Поставьте <span id="qrName">Qush</span> у себя в комнате</h3>
+  <div class="qr__code" id="qrCode" role="img" aria-label="QR-код со ссылкой на экспонат"></div>
+  <ol>
+    <li>Наведите камеру телефона на код.</li>
+    <li>Нажмите «AR в комнате» и наведите камеру на пол.</li>
+    <li>Предмет встанет в натуральную величину — обойдите его вокруг.</li>
+  </ol>
+  <p class="qr__note">iPhone и iPad с iOS 12+, Android с поддержкой ARCore.</p>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
 <script>
 // torn-paper edges (deterministic)
 function rand(s){return()=>{s=(s*16807)%2147483647;return(s-1)/2147483646}}
@@ -406,13 +442,13 @@ heroMv.addEventListener('load',()=>stage.classList.add('loaded'));
 
 // ko'rgazma — NOTE: names, sizes and texts are placeholders until the brand confirms them
 const items=[
- {f:'m1',name:'Lagan',type:'Оттоманка',sub:'Оттоманка на точёных ножках',suzani:'Нурата, винтаж ~1970',frame:'Орех, патина',size:'90 × 90 × 46 см',hours:'≈ 30 ч',desc:'Старое сюзане с выцветшим лиловым медальоном. Следы времени сохранены — это часть истории ткани.'},
- {f:'m2',name:'Qayiq',type:'Банкетка',sub:'Банкетка-«лодка» с валиками',suzani:'Ташкент, чёрно-белая гладь',frame:'Бук',size:'150 × 55 × 72 см',hours:'≈ 55 ч',desc:'Изогнутое сиденье между двумя валиками. Графичное сюзане читается как рисунок тушью.'},
- {f:'m3',name:'Lola',type:'Кресло',sub:'Слиппер-кресло, пэчворк',suzani:'Бухара, лоскуты разных лет',frame:'Бук',size:'70 × 68 × 96 см',hours:'≈ 40 ч',desc:'Собрано из фрагментов нескольких сюзане: красный, шафран и розовый в одном силуэте.'},
- {f:'m4',name:'Qush',type:'Кресло',sub:'Кресло «Птица»',suzani:'Самарканд, тамбурный шов',frame:'Бук, масло-воск',size:'62 × 78 × 92 см',hours:'≈ 42 ч',desc:'Каркас в духе модерна 60-х и птица на спинке — главный мотив MARIVI.'},
- {f:'m5',name:'Tun',type:'Кресло',sub:'Кресло «Ночь»',suzani:'Шахрисабз, по тёмному фону',frame:'Бук, резные боковины',size:'85 × 90 × 92 см',hours:'≈ 60 ч',desc:'Сюзане на чёрном фоне — редкий «ночной» тип вышивки. Боковины из дерева с резьбой.'},
- {f:'m6',name:'Anor',type:'Кресло',sub:'Кресло-ракушка «Гранат»',suzani:'Современная вышивка',frame:'Бук, латунные наконечники',size:'82 × 90 × 92 см',hours:'≈ 38 ч',desc:'Красный, как зёрна граната. Мотив «глаза» — оберег в узбекской вышивке.'},
- {f:'m7',name:"Xo'roz",type:'Кресло',sub:'Кресло «Петух»',suzani:'Бухара, шёлк по хлопку',frame:'Бук',size:'80 × 60 × 94 см',hours:'≈ 45 ч',desc:'Петух — символ утра и удачи. Сиденье обтянуто маргиланским адрасом.'},
+ {f:'m1',name:'Lagan',type:'Оттоманка',sub:'Оттоманка на точёных ножках',suzani:'Нурата, винтаж ~1970',frame:'Орех, патина',hours:'≈ 30 ч',desc:'Старое сюзане с выцветшим лиловым медальоном. Следы времени сохранены — это часть истории ткани.'},
+ {f:'m2',name:'Qayiq',type:'Банкетка',sub:'Банкетка-«лодка» с валиками',suzani:'Ташкент, чёрно-белая гладь',frame:'Бук',hours:'≈ 55 ч',desc:'Изогнутое сиденье между двумя валиками. Графичное сюзане читается как рисунок тушью.'},
+ {f:'m3',name:'Lola',type:'Кресло',sub:'Слиппер-кресло, пэчворк',suzani:'Бухара, лоскуты разных лет',frame:'Бук',hours:'≈ 40 ч',desc:'Собрано из фрагментов нескольких сюзане: красный, шафран и розовый в одном силуэте.'},
+ {f:'m4',name:'Qush',type:'Кресло',sub:'Кресло «Птица»',suzani:'Самарканд, тамбурный шов',frame:'Бук, масло-воск',hours:'≈ 42 ч',desc:'Каркас в духе модерна 60-х и птица на спинке — главный мотив MARIVI.'},
+ {f:'m5',name:'Tun',type:'Кресло',sub:'Кресло «Ночь»',suzani:'Шахрисабз, по тёмному фону',frame:'Бук, резные боковины',hours:'≈ 60 ч',desc:'Сюзане на чёрном фоне — редкий «ночной» тип вышивки. Боковины из дерева с резьбой.'},
+ {f:'m6',name:'Anor',type:'Кресло',sub:'Кресло-ракушка «Гранат»',suzani:'Современная вышивка',frame:'Бук, латунные наконечники',hours:'≈ 38 ч',desc:'Красный, как зёрна граната. Мотив «глаза» — оберег в узбекской вышивке.'},
+ {f:'m7',name:"Xo'roz",type:'Кресло',sub:'Кресло «Петух»',suzani:'Бухара, шёлк по хлопку',frame:'Бук',hours:'≈ 45 ч',desc:'Петух — символ утра и удачи. Сиденье обтянуто маргиланским адрасом.'},
 ];
 const $=id=>document.getElementById(id), mv=$('mv'), hall=$('hall'), inner=$('inner'), pad=n=>String(n).padStart(2,'0');
 $('list').innerHTML=items.map((it,i)=>`<li><button type="button" data-i="${i}"><span>${pad(i+1)}</span><b>${it.name}</b><small>${it.type}</small></button></li>`).join('');
@@ -424,7 +460,7 @@ function show(i,instant){
   setTimeout(()=>{
     $('inv').textContent='Inv. № '+String(i+1).padStart(3,'0');
     $('name').textContent=it.name; $('sub').textContent=it.sub; $('desc').textContent=it.desc; $('cur').textContent=pad(i+1);
-    $('spec').innerHTML=`<dt>Сюзане</dt><dd>${it.suzani}</dd><dt>Каркас</dt><dd>${it.frame}</dd><dt>Размер</dt><dd>${it.size}</dd><dt>Ручная работа</dt><dd>${it.hours}</dd>`;
+    $('spec').innerHTML=`<dt>Сюзане</dt><dd>${it.suzani}</dd><dt>Каркас</dt><dd>${it.frame}</dd><dt>Размер, Ш×Г×В</dt><dd id="size">…</dd><dt>Ручная работа</dt><dd>${it.hours}</dd>`;
     mv.alt=`${it.sub}, ${it.suzani}`; mv.cameraOrbit='-22deg 78deg 118%';
     if(galleryReady) mv.src=`models/${it.f}.glb`;
   },instant?0:350);
@@ -446,8 +482,56 @@ addEventListener('keydown',e=>{
   const r=hall.getBoundingClientRect(); if(r.top>innerHeight||r.bottom<0)return;
   if(e.key==='ArrowRight')show(cur+1); if(e.key==='ArrowLeft')show(cur-1);
 });
-$('arbtn').onclick=()=>mv.canActivateAR?mv.activateAR():alert('AR доступен на телефоне: откройте эту страницу на iPhone или Android.');
-show(3,true);
+// ── AR ──────────────────────────────────────────
+// Phones with AR: true-size model on the floor (WebXR / Scene Viewer / Quick Look).
+// Desktop: a QR code that opens this exhibit on the phone (?item=N#korgazma).
+const arbtn=$('arbtn'), arlabel=$('arlabel'), isTouch=matchMedia('(pointer:coarse)').matches;
+let toastTimer;
+function toast(msg,ms=4500){const t=$('toast');t.textContent=msg;t.classList.add('is-on');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('is-on'),ms)}
+function updateArLabel(){arlabel.textContent=mv.canActivateAR?'AR в комнате':(isTouch?'AR в комнате':'AR на телефоне')}
+function qrSvg(text){
+  const q=qrcode(0,'M'); q.addData(text); q.make();
+  const n=q.getModuleCount(); let d='';
+  for(let r=0;r<n;r++)for(let c=0;c<n;c++)if(q.isDark(r,c))d+=`M${c} ${r}h1v1h-1z`;
+  return `<svg viewBox="0 0 ${n} ${n}" shape-rendering="crispEdges"><path d="${d}" fill="#22398A"/></svg>`;
+}
+function openQr(){
+  const url=`${location.origin}${location.pathname}?item=${cur+1}#korgazma`;
+  $('qrName').textContent=items[cur].name;
+  $('qrCode').innerHTML=qrSvg(url);
+  $('qrDialog').showModal();
+}
+$('qrDialog').addEventListener('click',e=>{if(e.target===e.currentTarget)e.currentTarget.close()});
+arbtn.onclick=()=>{
+  if(mv.canActivateAR&&mv.loaded){
+    arbtn.classList.add('is-busy'); arlabel.textContent='Запускаем AR…';
+    mv.activateAR();
+    setTimeout(()=>{arbtn.classList.remove('is-busy');updateArLabel()},6000); // Quick Look sends no status
+  } else if(mv.canActivateAR){
+    toast('Модель ещё загружается — нажмите через пару секунд.');
+  } else if(!isTouch){
+    openQr();
+  } else {
+    toast('Этот телефон не поддерживает AR. Нужен iPhone с iOS 12+ или Android с поддержкой ARCore.',6000);
+  }
+};
+mv.addEventListener('ar-status',e=>{
+  const s=e.detail.status;
+  if(s==='session-started'){arbtn.classList.remove('is-busy');updateArLabel();toast('Медленно поводите телефоном и наведите камеру на пол.')}
+  if(s==='failed'){arbtn.classList.remove('is-busy');updateArLabel();toast('Не удалось запустить AR. Проверьте доступ к камере и попробуйте ещё раз.',6000)}
+  if(s==='not-presenting'){arbtn.classList.remove('is-busy');updateArLabel()}
+});
+mv.addEventListener('ar-tracking',e=>{if(e.detail.status==='not-tracking')toast('Камера потеряла пол — поводите телефоном медленнее.')});
+// real size, measured from the model (models are baked at true scale, see models.json)
+const cm=v=>Math.round(v*100);
+mv.addEventListener('load',()=>{const d=mv.getDimensions();$('size').textContent=`${cm(d.x)} × ${cm(d.z)} × ${cm(d.y)} см`;updateArLabel()});
+updateArLabel();
+
+// deep link from the QR code: ?item=N opens that exhibit
+const fromQr=parseInt(new URLSearchParams(location.search).get('item'),10);
+const start=fromQr>=1&&fromQr<=items.length?fromQr-1:3;
+show(start,true);
+if(fromQr){arbtn.classList.add('is-pulse');}
 </script>
 </body>
 </html>

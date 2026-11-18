@@ -1,0 +1,10 @@
+{
+  "_comment": "Real height of each piece in centimetres. AR shows furniture at true size, so these must match the real objects. Values below are ESTIMATES — confirm with the brand, then run `npm run optimize`.",
+  "m1": { "name": "Lagan",  "heightCm": 46 },
+  "m2": { "name": "Qayiq",  "heightCm": 72 },
+  "m3": { "name": "Lola",   "heightCm": 96 },
+  "m4": { "name": "Qush",   "heightCm": 92 },
+  "m5": { "name": "Tun",    "heightCm": 92 },
+  "m6": { "name": "Anor",   "heightCm": 92 },
+  "m7": { "name": "Xo'roz", "heightCm": 94 }
+}
