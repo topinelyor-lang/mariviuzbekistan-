@@ -321,7 +321,7 @@ h1 .k path{stroke:var(--anor);stroke-width:3;fill:none;stroke-linecap:round;stro
       <text font-family="Golos Text" font-size="8.5" letter-spacing="2.4" fill="currentColor"><textPath href="#pm">TOSHKENT · BUXORO · 2026 ·</textPath></text>
       <path d="M8 50c20-6 74-6 94 0M8 60c20 6 74 6 94 0" stroke-width="1.5"/>
     </svg>
-    <model-viewer id="heroMv" src="models/m7.glb" alt="Кресло Xo'roz с вышивкой петуха, сюзане и адрас"
+    <model-viewer id="heroMv" src="models/m7.glb?v=2" alt="Кресло Xo'roz с вышивкой петуха, сюзане и адрас"
       camera-controls disable-zoom disable-pan auto-rotate auto-rotate-delay="2500" rotation-per-second="14deg"
       interaction-prompt="none" camera-orbit="-24deg 78deg 128%" field-of-view="26deg" min-camera-orbit="auto 55deg auto" max-camera-orbit="auto 92deg auto"
       shadow-intensity="1.15" shadow-softness=".9" exposure="1.02" tone-mapping="neutral" environment-image="neutral">
@@ -440,6 +440,8 @@ const heroMv=document.getElementById('heroMv'), stage=document.getElementById('s
 heroMv.addEventListener('progress',e=>stage.querySelector('.loader i').style.setProperty('--p',e.detail.totalProgress*100+'%'));
 heroMv.addEventListener('load',()=>stage.classList.add('loaded'));
 
+// Bump after `npm run optimize` (and in the hero <model-viewer> src) so browsers drop cached models.
+const MODELS_V='2';
 // ko'rgazma — NOTE: names, sizes and texts are placeholders until the brand confirms them
 const items=[
  {f:'m1',name:'Lagan',type:'Оттоманка',sub:'Оттоманка на точёных ножках',suzani:'Нурата, винтаж ~1970',frame:'Орех, патина',hours:'≈ 30 ч',desc:'Старое сюзане с выцветшим лиловым медальоном. Следы времени сохранены — это часть истории ткани.'},
@@ -462,7 +464,7 @@ function show(i,instant){
     $('name').textContent=it.name; $('sub').textContent=it.sub; $('desc').textContent=it.desc; $('cur').textContent=pad(i+1);
     $('spec').innerHTML=`<dt>Сюзане</dt><dd>${it.suzani}</dd><dt>Каркас</dt><dd>${it.frame}</dd><dt>Размер, Ш×Г×В</dt><dd id="size">…</dd><dt>Ручная работа</dt><dd>${it.hours}</dd>`;
     mv.alt=`${it.sub}, ${it.suzani}`; mv.cameraOrbit='-22deg 78deg 118%';
-    if(galleryReady) mv.src=`models/${it.f}.glb`;
+    if(galleryReady) mv.src=`models/${it.f}.glb?v=${MODELS_V}`;
   },instant?0:350);
 }
 // Load the gallery model only when the section is near the screen. We don't use
@@ -471,7 +473,7 @@ function show(i,instant){
 let galleryReady=false;
 new IntersectionObserver((entries,io)=>{
   if(!entries.some(e=>e.isIntersecting))return;
-  io.disconnect(); galleryReady=true; mv.src=`models/${items[cur].f}.glb`;
+  io.disconnect(); galleryReady=true; mv.src=`models/${items[cur].f}.glb?v=${MODELS_V}`;
 },{rootMargin:'600px 0px'}).observe(hall);
 const shown=()=>{hall.classList.remove('is-swapping');inner.classList.remove('loading')};
 mv.addEventListener('load',shown);
